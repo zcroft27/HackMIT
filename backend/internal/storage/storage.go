@@ -33,6 +33,7 @@ type OceanRepository interface {
 type TagRepository interface {
 	GetTags(ctx context.Context, filterParams models.GetTagsRequest) ([]models.Tag, error)
 	GetDefaultTag(ctx context.Context) (*models.Tag, error)
+	GetPersonalTag(ctx context.Context) (*models.Tag, error)
 }
 
 type Repository struct {
@@ -54,10 +55,10 @@ func (r *Repository) GetDB() *pgxpool.Pool {
 
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
-		db:    db,
-		User:  schema.NewUserRepository(db),
-		Ocean: schema.NewOceanRepository(db),
-		Tag:  schema.NewTagRepository(db),
+		db:     db,
+		User:   schema.NewUserRepository(db),
+		Ocean:  schema.NewOceanRepository(db),
+		Tag:    schema.NewTagRepository(db),
 		Bottle: schema.NewBottleRepository(db),
 	}
 }

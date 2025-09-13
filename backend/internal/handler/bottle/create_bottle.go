@@ -15,7 +15,14 @@ func (h *Handler) CreateBottle(c *fiber.Ctx) error {
 		return errs.BadRequest(fmt.Sprintf("error parsing request body: %v", err))
 	}
 
-	if filterParams.TagID == nil {
+	if filterParams.Personal != nil && *filterParams.Personal {
+		personalTag, tag_err := h.tagRepository.GetPersonalTag(c.Context())
+		if tag_err != nil {
+			return tag_err
+		}
+
+		filterParams.TagID = &personalTag.ID
+	} else if filterParams.TagID == nil {
 		defaultTag, tag_err := h.tagRepository.GetDefaultTag(c.Context())
 		if tag_err != nil {
 			return tag_err

@@ -71,6 +71,29 @@ func (r *TagRepository) GetDefaultTag(ctx context.Context) (*models.Tag, error) 
 
 }
 
+func (r *TagRepository) GetPersonalTag(ctx context.Context) (*models.Tag, error) {
+	query := `
+	SELECT tag.id, name, color
+	FROM tag
+	WHERE name='Personal'
+	LIMIT 1
+	`
+
+	row, err := r.db.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer row.Close()
+	tag, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Tag])
+
+	if err != nil {
+		return nil, fmt.Errorf("error querying database for tag: %w", err)
+	}
+
+	return &tag, nil
+
+}
+
 func NewTagRepository(db *pgxpool.Pool) *TagRepository {
 	return &TagRepository{
 		db,

@@ -22,6 +22,7 @@ type CreateBottleRequest struct {
 	TagID        *int       `json:"tag_id,omitempty"`
 	UserID       *uuid.UUID `json:"user_id,omitempty"`
 	LocationFrom *string    `json:"location_from,omitempty"`
+	Personal     *bool      `json:"personal,omitempty"`
 }
 
 type GetBottlesRequest struct {
