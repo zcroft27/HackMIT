@@ -21,7 +21,7 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Signup request failed: %v", err)})
 	}
 
-	_, err = h.userRepository.AddUser(c.Context(), strconv.Itoa(response.User.ID), creds.FirstName, creds.LastName)
+	_, err = h.userRepository.AddUser(c.Context(), strconv.Itoa(response.User.ID), creds.FirstName, creds.LastName, creds.Email)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Adding User request failed: %v", err)})
 	}

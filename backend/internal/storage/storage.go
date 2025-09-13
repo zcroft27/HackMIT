@@ -9,7 +9,7 @@ import (
 )
 
 type UserRepository interface {
-	AddUser(ctx context.Context, userId string, firstName *string, lastName *string) (*models.User, error)
+	AddUser(ctx context.Context, userId string, firstName *string, lastName *string, email string) (*models.User, error)
 	GetUserProfile(ctx context.Context, userID string) (*models.User, error)
 	DeleteUser(ctx context.Context, userID string) (string, error)
 }

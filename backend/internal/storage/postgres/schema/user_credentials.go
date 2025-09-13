@@ -13,14 +13,15 @@ type UserRepository struct {
 	db *pgxpool.Pool
 }
 
-func (r *UserRepository) AddUser(ctx context.Context, userID string, firstName *string, lastName *string) (*models.User, error) {
-	const query = `Insert into public.user (id, first_name, last_name) Values ($1, $2, $3)RETURNING id, first_name, last_name;
+func (r *UserRepository) AddUser(ctx context.Context, userID string, firstName *string, lastName *string, email string) (*models.User, error) {
+	const query = `Insert into public.user (id, first_name, last_name, email) Values ($1, $2, $3, $4)RETURNING id, first_name, last_name, email;
 	`
 	var user models.User
-	err := r.db.QueryRow(ctx, query, userID, firstName, lastName).Scan(
+	err := r.db.QueryRow(ctx, query, userID, firstName, lastName, email).Scan(
 		&user.ID,
 		&user.FirstName,
-		&user.LastName)
+		&user.LastName,
+		&user.Email)
 
 	if err != nil {
 		return nil, fmt.Errorf("error querying database: %w", err)
