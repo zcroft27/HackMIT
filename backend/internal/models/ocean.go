@@ -6,3 +6,9 @@ type Ocean struct {
 	Description *string `json:"last_name,omitempty"`
 	UserID      int     `json:"user_id"`
 }
+
+type GetOceansRequest struct {
+	IncludeTags []Tag   `json:"include_tags,omitempty"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
