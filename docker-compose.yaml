@@ -9,7 +9,7 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-    command: npm run dev
+    command: npm start
     develop:
       watch:
         - action: sync+restart

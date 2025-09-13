@@ -2,24 +2,13 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# COPY package*.json ./
+COPY package*.json ./
+RUN npm install
 
-# RUN npm install
+COPY . .
 
-# COPY . .
+# Remove Next.js specific env vars and build step
+# Create React App builds are typically handled differently
 
-# # Pass environment variables to the build step
-# ARG NEXT_PUBLIC_API_BASE_URL
-# ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
-
-# ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-# ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-# ARG NEXT_PUBLIC_SUPABASE_URL
-# ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-
-# RUN npm run build
-
-# EXPOSE 3000
-
-# CMD ["npm", "start"]
+EXPOSE 3000
+CMD ["npm", "start"]  # This runs the dev server
