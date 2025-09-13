@@ -22,7 +22,7 @@ func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.Get
         FROM ocean o
     `
 
-	args := []interface{}{}
+	args := []any{}
 	conditions := []string{}
 	argCount := 0
 
@@ -56,8 +56,6 @@ func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.Get
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
-
-	//query += " ORDER BY o.created_at DESC"
 
 	// Execute query
 	rows, err := r.db.Query(ctx, query, args...)
