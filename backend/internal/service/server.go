@@ -4,11 +4,8 @@ import (
 	"context"
 	"hackmit/internal/config"
 	errs "hackmit/internal/errs"
-<<<<<<< HEAD
-	"hackmit/internal/handler/bottle"
-=======
 	"hackmit/internal/handler/auth"
->>>>>>> main
+	"hackmit/internal/handler/bottle"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
 	"net/http"
@@ -84,13 +81,6 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 		return c.SendStatus(http.StatusOK)
 	})
 
-<<<<<<< HEAD
-	bottleHandler := bottle.NewHandler(repo.Bottle)
-	apiV1.Route("/bottle", func(r fiber.Router) {
-		r.Delete("/:id", bottleHandler.DeleteBottle)
-		r.Post("/", bottleHandler.CreateBottle)
-		r.Get("/", bottleHandler.GetBottles)
-=======
 	SupabaseAuthHandler := auth.NewHandler(config.Supabase, repo.User)
 
 	apiV1.Route("/auth", func(router fiber.Router) {
@@ -103,7 +93,13 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 			id := c.Params("id")
 			return SupabaseAuthHandler.DeleteAccount(c, id)
 		})
->>>>>>> main
+	})
+
+	bottleHandler := bottle.NewHandler(repo.Bottle, repo.Tag)
+	apiV1.Route("/bottle", func(r fiber.Router) {
+		r.Delete("/:id", bottleHandler.DeleteBottle)
+		r.Post("/", bottleHandler.CreateBottle)
+		r.Get("/", bottleHandler.GetBottles)
 	})
 
 	// Handle 404 - Route not found
