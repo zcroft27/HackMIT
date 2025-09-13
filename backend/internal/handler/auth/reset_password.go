@@ -2,7 +2,7 @@ package auth
 
 import (
 	"fmt"
-	"hackmit/internal/service/auth"
+	"hackmit/internal/auth"
 
 	"github.com/gofiber/fiber/v2"
 )

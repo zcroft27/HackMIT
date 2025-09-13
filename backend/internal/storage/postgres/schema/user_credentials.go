@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 	"fmt"
-	"hackmit/internal/service/models"
+	"hackmit/internal/models"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"hackmit/internal/service/config"
+	"hackmit/internal/config"
 	"hackmit/internal/storage"
 	"log"
 

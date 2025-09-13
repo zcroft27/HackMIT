@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"hackmit/internal/service/config"
+	"hackmit/internal/config"
 	"hackmit/internal/storage"
 )
 

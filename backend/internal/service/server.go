@@ -2,13 +2,11 @@ package service
 
 import (
 	"context"
-	"hackmit/internal/service/config"
-	errs "hackmit/internal/service/errs"
+	"hackmit/internal/config"
+	errs "hackmit/internal/errs"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
 	"net/http"
-
-	"hackmit/internal/service/handler/auth"
 
 	go_json "github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
@@ -79,20 +77,6 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 
 	apiV1.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusOK)
-	})
-
-	SupabaseAuthHandler := auth.NewHandler(config.Supabase, repo.User)
-
-	apiV1.Route("/auth", func(router fiber.Router) {
-		router.Post("/signup", SupabaseAuthHandler.SignUp)
-		router.Post("/login", SupabaseAuthHandler.Login)
-		router.Post("/forgot-password", SupabaseAuthHandler.ForgotPassword)
-		router.Post("/reset-password", SupabaseAuthHandler.ResetPassword)
-		router.Post("/sign-out", SupabaseAuthHandler.SignOut)
-		router.Delete("/delete-account/:id", func(c *fiber.Ctx) error {
-			id := c.Params("id")
-			return SupabaseAuthHandler.DeleteAccount(c, id)
-		})
 	})
 
 	// Handle 404 - Route not found
