@@ -113,3 +113,9 @@ func (r *BottleRepository) GetBottlesByUser(ctx context.Context, userId int) ([]
 
 	return bottles, nil
 }
+
+func NewBottleRepository(db *pgxpool.Pool) *BottleRepository {
+	return &BottleRepository{
+		db,
+	}
+}

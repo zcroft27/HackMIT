@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"hackmit/internal/models"
+	"hackmit/internal/storage/postgres/schema"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -43,6 +44,7 @@ func (r *Repository) GetDB() *pgxpool.Pool {
 
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
-		db: db,
+		db:     db,
+		Bottle: schema.NewBottleRepository(db),
 	}
 }

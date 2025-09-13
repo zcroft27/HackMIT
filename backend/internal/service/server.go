@@ -4,6 +4,7 @@ import (
 	"context"
 	"hackmit/internal/config"
 	errs "hackmit/internal/errs"
+	"hackmit/internal/handler/bottle"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
 	"net/http"
@@ -85,6 +86,13 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 			"error": "Route not found",
 			"path":  c.Path(),
 		})
+	})
+
+	bottleHandler := bottle.NewHandler(repo.Bottle)
+	app.Route("/bottle", func(r fiber.Router) {
+		r.Delete("/:id", bottleHandler.DeleteBottle)
+		r.Post("/", bottleHandler.CreateBottle)
+		r.Get("/", bottleHandler.GetBottles)
 	})
 
 	return app
