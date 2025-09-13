@@ -16,7 +16,7 @@ type BottleRepository struct {
 }
 
 func (r *BottleRepository) CreateBottle(ctx context.Context, req models.CreateBottleRequest) (*models.Bottle, error) {
-	var values []interface{} = []interface{}{req.Content}
+	var values []any = []any{req.Content}
 	var columns []string = []string{"content"}
 
 	if req.Author != nil {
@@ -67,7 +67,7 @@ func (r *BottleRepository) DeleteBottle(ctx context.Context, bottleId int) (stri
 	const query = `DELETE FROM bottle WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, bottleId)
 	if err != nil {
-		return "", fmt.Errorf("error querying database for user: %w", err)
+		return "", fmt.Errorf("error querying database for bottle: %w", err)
 	}
 	return "Bottle Deleted Successfully", nil
 }
