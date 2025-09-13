@@ -8,10 +8,12 @@ import (
 	"hackmit/internal/errs"
 	"io"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type userResponse struct {
-	ID int `json:"id"`
+	ID uuid.UUID `json:"id"`
 }
 
 type SignInResponse struct {

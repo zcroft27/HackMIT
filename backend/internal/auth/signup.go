@@ -8,6 +8,8 @@ import (
 	"hackmit/internal/errs"
 	"io"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type Payload struct {
@@ -16,7 +18,7 @@ type Payload struct {
 }
 
 type userSignupResponse struct {
-	ID int `json:"id"`
+	ID uuid.UUID `json:"id"`
 }
 
 type signupResponse struct {

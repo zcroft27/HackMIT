@@ -3,7 +3,6 @@ package auth
 import (
 	"fmt"
 	"hackmit/internal/auth"
-	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +20,7 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Signup request failed: %v", err)})
 	}
 
-	_, err = h.userRepository.AddUser(c.Context(), strconv.Itoa(response.User.ID), creds.FirstName, creds.LastName, creds.Email)
+	_, err = h.userRepository.AddUser(c.Context(), response.User.ID.String(), creds.FirstName, creds.LastName, creds.Email)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Adding User request failed: %v", err)})
 	}
@@ -37,7 +36,7 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 	})
 
 	c.Cookie(&fiber.Cookie{
-		Value:    strconv.Itoa(response.User.ID),
+		Value:    response.User.ID.String(),
 		Expires:  expiration,
 		Secure:   true,
 		SameSite: "Lax",
