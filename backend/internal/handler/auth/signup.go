@@ -31,6 +31,11 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Adding User request failed: %v", err)})
 	}
 
+	_, err = h.oceanRepository.CreateOcean(c.Context(), creds.FirstName, getOceanName(creds.FirstName), userUUID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("Creating personal ocean failed: %v", err)})
+	}
+
 	// Set cookies with the JWT token
 	expiration := time.Now().Add(30 * 24 * time.Hour) // 30 days
 	c.Cookie(&fiber.Cookie{
@@ -50,4 +55,13 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 	})
 
 	return c.Status(fiber.StatusCreated).JSON(response)
+}
+
+func getOceanName(firstName *string) *string {
+	if firstName != nil && *firstName != "" {
+		oceanName := *firstName + "'s personal ocean"
+		return &oceanName
+	}
+	defaultName := "Personal ocean"
+	return &defaultName
 }
