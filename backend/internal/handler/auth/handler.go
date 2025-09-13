@@ -6,8 +6,9 @@ import (
 )
 
 type Handler struct {
-	config         config.Supabase
-	userRepository storage.UserRepository
+	config          config.Supabase
+	userRepository  storage.UserRepository
+	oceanRepository storage.OceanRepository
 }
 
 type Credentials struct {
@@ -18,9 +19,10 @@ type Credentials struct {
 	RememberMe bool
 }
 
-func NewHandler(config config.Supabase, userRepository storage.UserRepository) *Handler {
+func NewHandler(config config.Supabase, userRepository storage.UserRepository, oceanRepository storage.OceanRepository) *Handler {
 	return &Handler{
 		config,
 		userRepository,
+		oceanRepository,
 	}
 }
