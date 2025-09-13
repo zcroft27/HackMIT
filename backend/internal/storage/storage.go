@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"hackmit/internal/models"
+	"hackmit/internal/storage/postgres/schema"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,7 +15,8 @@ type UserRepository interface {
 }
 
 type Repository struct {
-	db *pgxpool.Pool
+	db   *pgxpool.Pool
+	User UserRepository
 }
 
 func (r *Repository) Close() error {
@@ -28,6 +30,7 @@ func (r *Repository) GetDB() *pgxpool.Pool {
 
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
-		db: db,
+		db:   db,
+		User: schema.NewUserRepository(db),
 	}
 }
