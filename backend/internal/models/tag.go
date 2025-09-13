@@ -5,3 +5,8 @@ type Tag struct {
 	Name  *string `json:"name,omitempty"`
 	Color *string `json:"color,omitempty"`
 }
+
+type GetTagsRequest struct {
+	IncludeDefault *bool   `json:"include_default,omitempty"`
+	Name           *string `json:"name,omitempty"`
+}
