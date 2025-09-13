@@ -3,6 +3,7 @@ package schema
 import (
 	"context"
 	"fmt"
+	"hackmit/internal/errs"
 	"hackmit/internal/models"
 	"strings"
 
@@ -27,8 +28,7 @@ func (r *BottleRepository) CreateBottle(ctx context.Context, req models.CreateBo
 		values = append(values, *req.TagID)
 		columns = append(columns, "tag_id")
 	} else {
-		// do something to get a default tag id lol
-		// call GetDefaultTag
+		return nil, errs.BadRequest("Missing tag_id")
 	}
 
 	if req.UserID != nil {

@@ -80,19 +80,19 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 		return c.SendStatus(http.StatusOK)
 	})
 
+	bottleHandler := bottle.NewHandler(repo.Bottle)
+	apiV1.Route("/bottle", func(r fiber.Router) {
+		r.Delete("/:id", bottleHandler.DeleteBottle)
+		r.Post("/", bottleHandler.CreateBottle)
+		r.Get("/", bottleHandler.GetBottles)
+	})
+
 	// Handle 404 - Route not found
 	app.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Route not found",
 			"path":  c.Path(),
 		})
-	})
-
-	bottleHandler := bottle.NewHandler(repo.Bottle)
-	app.Route("/bottle", func(r fiber.Router) {
-		r.Delete("/:id", bottleHandler.DeleteBottle)
-		r.Post("/", bottleHandler.CreateBottle)
-		r.Get("/", bottleHandler.GetBottles)
 	})
 
 	return app
