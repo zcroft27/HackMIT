@@ -8,7 +8,7 @@ import (
 // GetRandomPersonalOcean handles GET /api/v1/oceans/personal
 func (h *Handler) GetRandomPersonalOcean(c *fiber.Ctx) error {
 	// Get user ID from route parameter
-	userIDStr := c.Params("userId")
+	userIDStr := c.Params("id") // Changed from "userId" to "id"
 	if userIDStr == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "User ID is required",
