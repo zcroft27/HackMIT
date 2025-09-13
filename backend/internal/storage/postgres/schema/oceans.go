@@ -85,7 +85,7 @@ func (r *OceanRepository) GetDefaultOcean(ctx context.Context) (*models.Ocean, e
 	const query = `
         SELECT id, name, description, user_id
         FROM ocean
-        WHERE user_id IS NULL 
+        WHERE user_id IS NULL and name = 'Default'
         ORDER BY id ASC
         LIMIT 1
     `
