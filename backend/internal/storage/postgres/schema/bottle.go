@@ -69,7 +69,7 @@ func (r *BottleRepository) DeleteBottle(ctx context.Context, bottleId int) (stri
 	if err != nil {
 		return "", fmt.Errorf("error querying database for user: %w", err)
 	}
-	return "User Deleted Successfully", nil
+	return "Bottle Deleted Successfully", nil
 }
 
 func (r *BottleRepository) GetBottles(ctx context.Context, filterParams models.GetBottlesRequest) ([]models.Bottle, error) {
@@ -80,6 +80,7 @@ func (r *BottleRepository) GetBottles(ctx context.Context, filterParams models.G
 			WHERE ocean_id = $1
 		);
 	`
+	fmt.Println(filterParams.OceanID)
 	rows, err := r.db.Query(ctx, query, filterParams.OceanID)
 	if err != nil {
 		return nil, err

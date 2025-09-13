@@ -6,6 +6,7 @@ import (
 	errs "hackmit/internal/errs"
 	"hackmit/internal/handler/auth"
 	"hackmit/internal/handler/bottle"
+	"hackmit/internal/handler/tag"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
 	"net/http"
@@ -93,6 +94,11 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 			id := c.Params("id")
 			return SupabaseAuthHandler.DeleteAccount(c, id)
 		})
+	})
+
+	TagHandler := tag.NewHandler(repo.Tag)
+	apiV1.Route("/tags", func(router fiber.Router) {
+		router.Get("/", TagHandler.Get)
 	})
 
 	bottleHandler := bottle.NewHandler(repo.Bottle, repo.Tag)
