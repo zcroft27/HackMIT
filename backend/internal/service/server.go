@@ -70,7 +70,7 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 	}))
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).SendString("Welcome to The Special Standard!")
+		return c.Status(fiber.StatusOK).SendString("Welcome to The DIGITAL OCEAN!")
 	})
 
 	apiV1 := app.Group("/api/v1")
