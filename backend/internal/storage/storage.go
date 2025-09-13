@@ -52,8 +52,9 @@ func (r *Repository) GetDB() *pgxpool.Pool {
 
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
-		db:   db,
-		User: schema.NewUserRepository(db),
-		Tag:  schema.NewTagRepository(db),
+		db:     db,
+		User:   schema.NewUserRepository(db),
+		Tag:    schema.NewTagRepository(db),
+		Bottle: schema.NewBottleRepository(db),
 	}
 }

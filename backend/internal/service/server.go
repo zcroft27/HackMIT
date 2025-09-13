@@ -5,6 +5,7 @@ import (
 	"hackmit/internal/config"
 	errs "hackmit/internal/errs"
 	"hackmit/internal/handler/auth"
+	"hackmit/internal/handler/bottle"
 	"hackmit/internal/handler/tag"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
@@ -98,6 +99,13 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 	TagHandler := tag.NewHandler(repo.Tag)
 	apiV1.Route("/tags", func(router fiber.Router) {
 		router.Get("/", TagHandler.Get)
+	})
+
+	bottleHandler := bottle.NewHandler(repo.Bottle, repo.Tag)
+	apiV1.Route("/bottle", func(r fiber.Router) {
+		r.Delete("/:id", bottleHandler.DeleteBottle)
+		r.Post("/", bottleHandler.CreateBottle)
+		r.Get("/", bottleHandler.GetBottles)
 	})
 
 	// Handle 404 - Route not found

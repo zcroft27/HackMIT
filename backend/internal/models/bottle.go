@@ -21,5 +21,6 @@ type CreateBottleRequest struct {
 }
 
 type GetBottlesRequest struct {
-	OceanID int `json:"ocean_id"`
+	OceanID int  `query:"ocean_id"`
+	UserID  *int `query:"user_id,omitempty"`
 }
