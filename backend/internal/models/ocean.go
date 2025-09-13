@@ -10,7 +10,7 @@ type Ocean struct {
 }
 
 type GetOceansRequest struct {
-	IncludeTags []Tag   `json:"include_tags,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
+	IncludeTags []int   `query:"include_tags,omitempty"`
+	Name        *string `query:"name,omitempty"`
+	Description *string `query:"description,omitempty"`
 }

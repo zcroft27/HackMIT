@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"hackmit/internal/models"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -17,62 +18,55 @@ type OceanRepository struct {
 
 func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.GetOceansRequest) ([]models.Ocean, error) {
 	query := `
-        SELECT o.id, o.name, o.description, o.user_id
+        SELECT DISTINCT o.id, o.name, o.description, o.user_id, o.created_at
         FROM ocean o
-        WHERE 1=1
     `
+
 	args := []interface{}{}
+	conditions := []string{}
 	argCount := 0
 
-	// Add filters based on GetOceansRequest
+	// Join with tag_ocean if filtering by tags
+	if len(filterParams.IncludeTags) > 0 {
+		query += " INNER JOIN tag_ocean to ON o.id = to.ocean_id"
+
+		placeholders := make([]string, len(filterParams.IncludeTags))
+		for i, tagID := range filterParams.IncludeTags {
+			argCount++
+			placeholders[i] = fmt.Sprintf("$%d", argCount)
+			args = append(args, tagID)
+		}
+		conditions = append(conditions, fmt.Sprintf("to.tag_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	// Add name filter
 	if filterParams.Name != nil && *filterParams.Name != "" {
 		argCount++
-		query += fmt.Sprintf(" AND o.name ILIKE $%d", argCount)
+		conditions = append(conditions, fmt.Sprintf("o.name ILIKE $%d", argCount))
 		args = append(args, "%"+*filterParams.Name+"%")
 	}
 
+	// Add description filter
 	if filterParams.Description != nil && *filterParams.Description != "" {
 		argCount++
-		query += fmt.Sprintf(" AND o.description ILIKE $%d", argCount)
+		conditions = append(conditions, fmt.Sprintf("o.description ILIKE $%d", argCount))
 		args = append(args, "%"+*filterParams.Description+"%")
 	}
 
-	// Handle IncludeTags if needed
-	if len(filterParams.IncludeTags) > 0 {
-		tagIDs := make([]int, len(filterParams.IncludeTags))
-		for i, tag := range filterParams.IncludeTags {
-			tagIDs[i] = tag.ID
-		}
-
-		query = `
-            SELECT DISTINCT o.id, o.name, o.description, o.user_id
-            FROM ocean o
-            JOIN tag_ocean to ON o.id = to.ocean_id
-            WHERE 1=1
-        `
-
-		// Re-add previous filters
-		if filterParams.Name != nil && *filterParams.Name != "" {
-			query += fmt.Sprintf(" AND o.name ILIKE $%d", argCount)
-		}
-
-		if filterParams.Description != nil && *filterParams.Description != "" {
-			query += fmt.Sprintf(" AND o.description ILIKE $%d", argCount)
-		}
-
-		argCount++
-		query += fmt.Sprintf(" AND to.tag_id = ANY($%d)", argCount)
-		args = append(args, tagIDs)
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	query += " ORDER BY o.id DESC"
+	query += " ORDER BY o.created_at DESC"
 
+	// Execute query
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying oceans: %w", err)
 	}
 	defer rows.Close()
 
+	// Collect oceans
 	oceans, err := pgx.CollectRows(rows, pgx.RowToStructByName[models.Ocean])
 	if err != nil {
 		return nil, fmt.Errorf("error collecting ocean rows: %w", err)

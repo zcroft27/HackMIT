@@ -2,11 +2,12 @@ package ocean
 
 import (
 	"hackmit/internal/models"
+	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetOceans handles GET /api/v1/oceans
 func (h *Handler) GetOceans(c *fiber.Ctx) error {
 	var filterParams models.GetOceansRequest
 
@@ -19,10 +20,24 @@ func (h *Handler) GetOceans(c *fiber.Ctx) error {
 		filterParams.Description = &description
 	}
 
-	// Parse include_tags if provided
-	if tagIDsStr := c.Query("include_tags"); tagIDsStr != "" {
-		// You'll need to parse the tag IDs from the query string
-		// This is a simplified version - adjust based on how you pass tags
+	// Parse tag IDs for filtering
+	// Example: /api/v1/oceans?tag_ids=1,2,3
+	if tagIDsStr := c.Query("tag_ids"); tagIDsStr != "" {
+		tagIDStrings := strings.Split(tagIDsStr, ",")
+		tagIDs := make([]int, 0, len(tagIDStrings))
+
+		for _, idStr := range tagIDStrings {
+			id, err := strconv.Atoi(strings.TrimSpace(idStr))
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error":   "Invalid tag ID format",
+					"details": err.Error(),
+				})
+			}
+			tagIDs = append(tagIDs, id)
+		}
+
+		filterParams.IncludeTags = tagIDs
 	}
 
 	oceans, err := h.oceanRepository.GetOceans(c.Context(), filterParams)
