@@ -29,6 +29,7 @@ type Bottle = {
   bobOffset: number;
   bobSpeed: number;
   img: string;
+  rotation: number; // NEW
 };
 
 const getRandomBottleImage = () =>
@@ -42,26 +43,36 @@ const OceanApp = () => {
   const animationRef = useRef<number | null>(null);
 
   // Initialize bottles
-  useEffect(() => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const spacing = width / NUM_BOTTLES;
+useEffect(() => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const spacing = width / NUM_BOTTLES;
 
-    const initialBottles: Bottle[] = Array.from({ length: NUM_BOTTLES }).map(
-      (_, i) => {
-        const x = i * spacing + Math.random() * spacing * 0.5;
-        const baseY = Math.random() * (height - BOTTLE_HEIGHT);
-        const bobOffset = Math.random() * Math.PI * 2;
-        const bobSpeed =
-          BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN);
-        const img = getRandomBottleImage();
-        const y = baseY;
-        return { id: i, x, y, baseY, bobOffset, bobSpeed, img };
-      }
-    );
+  const initialBottles: Bottle[] = Array.from({ length: NUM_BOTTLES }).map(
+    (_, i) => {
+      // Base x position evenly spaced
+      const baseX = i * spacing + spacing / 2;
 
-    setBottles(initialBottles);
-  }, []);
+      // Add only a *small* random offset, but not enough to overlap
+      const jitter = (spacing - BOTTLE_WIDTH) / 2; // max safe jitter
+      const x = baseX + (Math.random() * 2 - 1) * jitter * 0.3; 
+      // ^ 0.3 keeps them from drifting too far
+
+      const baseY = Math.random() * (height - BOTTLE_HEIGHT);
+      const bobOffset = Math.random() * Math.PI * 2;
+      const bobSpeed =
+        BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN);
+      const img = getRandomBottleImage();
+      const y = baseY;
+      const rotation = Math.random() * 10 - 5; // -5° to +5°
+
+      return { id: i, x, y, baseY, bobOffset, bobSpeed, img, rotation };
+    }
+  );
+
+  setBottles(initialBottles);
+}, []);
+
 
   // Animate bottles
   useEffect(() => {
@@ -76,12 +87,14 @@ const OceanApp = () => {
             let newX = b.x - BOTTLE_SPEED;
             let newBaseY = b.baseY;
             let newImg = b.img;
+            let newRotation = b.rotation;
 
-            // Only respawn new bottle if popup is not open
+            // Respawn bottle if offscreen
             if (newX < -BOTTLE_WIDTH) {
               newX = width + Math.random() * width * 0.5;
               newBaseY = Math.random() * (height - BOTTLE_HEIGHT);
               newImg = getRandomBottleImage();
+              newRotation = Math.random() * 10 - 5; // reset tilt
             }
 
             const newY =
@@ -89,7 +102,14 @@ const OceanApp = () => {
               Math.sin(timeRef.current * b.bobSpeed + b.bobOffset) *
                 BOB_AMPLITUDE;
 
-            return { ...b, x: newX, baseY: newBaseY, y: newY, img: newImg };
+            return {
+              ...b,
+              x: newX,
+              baseY: newBaseY,
+              y: newY,
+              img: newImg,
+              rotation: newRotation,
+            };
           })
         );
       }
@@ -107,16 +127,13 @@ const OceanApp = () => {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        // Add a small delay to prevent immediate reopening
         setTimeout(() => {
           setPopupBottle(null);
         }, 10);
       }
     };
 
-    // Always listen to clicks on the document
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -132,21 +149,23 @@ const OceanApp = () => {
         backgroundColor: "#87CEEB",
       }}
     >
-      {/* Background */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "200%",
-          height: "100%",
-          backgroundImage: `url('${oceanImageUrl}')`,
-          backgroundRepeat: "repeat-x",
-          backgroundSize: "auto 100%",
-          backgroundPosition: "0 center",
-          animation: "scrollOcean 20s linear infinite",
-        }}
-      />
+    
+    {/* Background */}
+    <div
+    style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "200%",
+        height: "120%", // bigger so we can move vertically too
+        backgroundImage: `url('${oceanImageUrl}')`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "auto 100%",
+        backgroundPosition: "0 0",
+        animation: "scrollOcean 40s linear infinite",
+    }}
+    />
+
 
       {/* Bottles */}
       {bottles.map((b) => (
@@ -156,7 +175,7 @@ const OceanApp = () => {
           alt="Bottle"
           onClick={(e) => {
             e.stopPropagation();
-            if (!popupBottle) setPopupBottle(b); // capture exact clicked bottle
+            if (!popupBottle) setPopupBottle(b);
           }}
           style={{
             position: "absolute",
@@ -167,42 +186,42 @@ const OceanApp = () => {
             cursor: "pointer",
             zIndex: 5,
             userSelect: "none",
+            transform: `rotate(${b.rotation}deg)`, // apply tilt
           }}
           draggable={false}
         />
       ))}
 
       {/* Popup */}
-      {popupBottle && (
-        <div
-          ref={popupRef}
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            padding: "2rem",
-            borderRadius: "8px",
-            zIndex: 20,
-            color: "white",
-            textAlign: "center",
-            backgroundImage: `url('${parchmentImageUrl}')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-          }}
-        >
-          <p style={{ textShadow: "1px 1px 2px black" }}>Clicked a bottle!</p>
-          <img
-            src={popupBottle.img}
-            alt="Bottle"
-            style={{ width: 200, height: 200 }}
-          />
-          <p style={{ textShadow: "1px 1px 2px black" }}>
-            Click outside this popup to close.
-          </p>
-        </div>
-      )}
+{popupBottle && (
+  <div
+    ref={popupRef}
+    style={{
+      position: "fixed",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      padding: "1.5rem 2rem",
+      zIndex: 20,
+      color: "white",
+      textAlign: "center",
+      background: "black", // pixel-style purple
+      border: "4px solid #fff",
+      boxShadow: "0 0 0 4px #000", // chunky border
+      fontFamily: "'Press Start 2P', cursive", // pixel font
+      fontSize: "14px",
+      lineHeight: "1.5",
+      textShadow: "2px 2px #000",
+      imageRendering: "pixelated",
+    }}
+  >
+    <p style={{ margin: 0 }}>
+      You will have 3 sons next year.
+    </p>
+  </div>
+)}
+
+
 
       <style>{`
         @keyframes scrollOcean {
