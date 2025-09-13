@@ -28,7 +28,7 @@ func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.Get
 
 	// Join with tag_ocean if filtering by tags
 	if len(filterParams.IncludeTags) > 0 {
-		query += " INNER JOIN tag_ocean to ON o.id = to.ocean_id"
+		query += " INNER JOIN tag_ocean ON o.id = tag_ocean.ocean_id"
 
 		placeholders := make([]string, len(filterParams.IncludeTags))
 		for i, tagID := range filterParams.IncludeTags {
@@ -36,7 +36,7 @@ func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.Get
 			placeholders[i] = fmt.Sprintf("$%d", argCount)
 			args = append(args, tagID)
 		}
-		conditions = append(conditions, fmt.Sprintf("to.tag_id IN (%s)", strings.Join(placeholders, ",")))
+		conditions = append(conditions, fmt.Sprintf("tag_ocean.tag_id IN (%s)", strings.Join(placeholders, ",")))
 	}
 
 	// Add name filter

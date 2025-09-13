@@ -40,6 +40,7 @@ type Repository struct {
 	User   UserRepository
 	Bottle BottleRepository
 	Ocean  OceanRepository
+	Tag    TagRepository
 }
 
 func (r *Repository) Close() error {
@@ -56,5 +57,6 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 		db:    db,
 		User:  schema.NewUserRepository(db),
 		Ocean: schema.NewOceanRepository(db),
+		Tag:  schema.NewTagRepository(db),
 	}
 }
