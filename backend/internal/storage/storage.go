@@ -58,5 +58,6 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 		User:  schema.NewUserRepository(db),
 		Ocean: schema.NewOceanRepository(db),
 		Tag:  schema.NewTagRepository(db),
+		Bottle: schema.NewBottleRepository(db),
 	}
 }
