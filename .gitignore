@@ -1,0 +1,13 @@
+.task/
+
+.idea/
+
+
+backend/.env
+*/.env/*
+node_modules
+.vscode/
+
+.DS_STORE
+
+.next/

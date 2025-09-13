@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine
+FROM golang:1.25-alpine
 
 
 # Set the working directory (this is /backend in The Special Standard)
