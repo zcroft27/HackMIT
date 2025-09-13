@@ -8,6 +8,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type UserRepository interface {
+	AddUser(ctx context.Context, userId string, firstName *string, lastName *string, email string) (*models.User, error)
+	GetUserProfile(ctx context.Context, userID string) (*models.User, error)
+	DeleteUser(ctx context.Context, userID string) (string, error)
+}
+
 type BottleRepository interface {
 	CreateBottle(ctx context.Context, req models.CreateBottleRequest) (*models.Bottle, error)
 	DeleteBottle(ctx context.Context, bottleId int) (string, error)
@@ -29,6 +35,7 @@ type TagRepository interface {
 
 type Repository struct {
 	db     *pgxpool.Pool
+	User   UserRepository
 	Bottle BottleRepository
 	Ocean  OceanRepository
 }
@@ -45,6 +52,7 @@ func (r *Repository) GetDB() *pgxpool.Pool {
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
 		db:     db,
+		User:   schema.NewUserRepository(db),
 		Bottle: schema.NewBottleRepository(db),
 	}
 }
