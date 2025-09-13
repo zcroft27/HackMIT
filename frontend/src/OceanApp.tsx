@@ -32,6 +32,10 @@ type Bottle = {
   rotation: number; // NEW
 };
 
+
+
+
+
 const getRandomBottleImage = () =>
   bottleImageUrls[Math.floor(Math.random() * bottleImageUrls.length)];
 
@@ -41,6 +45,13 @@ const OceanApp = () => {
   const popupRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
   const animationRef = useRef<number | null>(null);
+  const [userID, setUserID] = useState<string>("");
+  // setUserID("98c2f579-4769-4a1d-bffd-0eb47c158720");
+  const [oceanID, setOceanID] = useState<string>("");
+  // setOceanID("2");
+  const [messageContent, setMessageContent] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
 
   // Initialize bottles
 useEffect(() => {
@@ -169,28 +180,62 @@ useEffect(() => {
 
       {/* Bottles */}
       {bottles.map((b) => (
-        <img
-          key={b.id}
-          src={b.img}
-          alt="Bottle"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!popupBottle) setPopupBottle(b);
-          }}
-          style={{
-            position: "absolute",
-            left: b.x,
-            top: b.y,
-            width: BOTTLE_WIDTH,
-            height: BOTTLE_HEIGHT,
-            cursor: "pointer",
-            zIndex: 5,
-            userSelect: "none",
-            transform: `rotate(${b.rotation}deg)`, // apply tilt
-          }}
-          draggable={false}
-        />
-      ))}
+  <img
+    key={b.id}
+    src={b.img}
+    alt="Bottle"
+    onClick={async (e) => {
+      e.stopPropagation();
+      if (!popupBottle && !isLoading) {
+        setPopupBottle(b);
+        setIsLoading(true);
+        
+        try {
+          // Build query parameters
+          const params = new URLSearchParams({
+            ocean_id: oceanID, // You'll need to add this to your component
+          });
+          
+          // Add user_id if logged in
+          if (userID) {
+            params.append('seen_by_user_id', userID);
+          }
+          
+          const response = await fetch(`/bottle/random?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setMessageContent(data.message || "The ocean whispers secrets...");
+          } else {
+            setMessageContent("The bottle's message has been lost to the waves...");
+          }
+        } catch (error) {
+          console.error('Failed to fetch bottle message:', error);
+          setMessageContent("The ocean's connection is turbulent...");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }}
+    style={{
+      position: "absolute",
+      left: b.x,
+      top: b.y,
+      width: BOTTLE_WIDTH,
+      height: BOTTLE_HEIGHT,
+      cursor: "pointer",
+      zIndex: 5,
+      userSelect: "none",
+      transform: `rotate(${b.rotation}deg)`,
+    }}
+    draggable={false}
+  />
+))}
 
       {/* Popup */}
 {popupBottle && (
@@ -216,7 +261,7 @@ useEffect(() => {
     }}
   >
     <p style={{ margin: 0 }}>
-      You will have 3 sons next year.
+      {isLoading ? "Reading the message..." : messageContent}
     </p>
   </div>
 )}
