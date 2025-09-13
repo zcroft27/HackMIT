@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type SeenModels struct {
-	UserID   int       `json:"user_id"`
+	UserID   uuid.UUID `json:"user_id"`
 	BottleID int       `json:"bottle_id"`
 	SeenAt   time.Time `json:"seen_at"`
 }

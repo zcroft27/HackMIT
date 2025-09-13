@@ -5,6 +5,7 @@ import (
 	"hackmit/internal/models"
 	"hackmit/internal/storage/postgres/schema"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -24,8 +25,9 @@ type BottleRepository interface {
 type OceanRepository interface {
 	GetOceans(ctx context.Context, filterParams models.GetOceansRequest) ([]models.Ocean, error)
 	GetDefaultOcean(ctx context.Context) (*models.Ocean, error)
-	GetRandomPersonalOcean(ctx context.Context, currentUserId int) (*models.Ocean, error)
-	GetOceanByUser(ctx context.Context, userId int) (*models.Ocean, error)
+	GetRandomPersonalOcean(ctx context.Context, currentUserId uuid.UUID) (*models.Ocean, error)
+	GetOceanByUser(ctx context.Context, userId uuid.UUID) (*models.Ocean, error)
+	CreateOcean(ctx context.Context, name *string, description *string, userId uuid.UUID) (*models.Ocean, error)
 }
 
 type TagRepository interface {
@@ -38,6 +40,7 @@ type Repository struct {
 	User   UserRepository
 	Bottle BottleRepository
 	Ocean  OceanRepository
+	Tag    TagRepository
 }
 
 func (r *Repository) Close() error {
@@ -51,7 +54,10 @@ func (r *Repository) GetDB() *pgxpool.Pool {
 
 func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
-		db:   db,
-		User: schema.NewUserRepository(db),
+		db:    db,
+		User:  schema.NewUserRepository(db),
+		Ocean: schema.NewOceanRepository(db),
+		Tag:  schema.NewTagRepository(db),
+		Bottle: schema.NewBottleRepository(db),
 	}
 }

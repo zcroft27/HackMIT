@@ -5,6 +5,9 @@ import (
 	"hackmit/internal/config"
 	errs "hackmit/internal/errs"
 	"hackmit/internal/handler/auth"
+	"hackmit/internal/handler/ocean"
+	"hackmit/internal/handler/bottle"
+	"hackmit/internal/handler/tag"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
 	"net/http"
@@ -80,7 +83,7 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 		return c.SendStatus(http.StatusOK)
 	})
 
-	SupabaseAuthHandler := auth.NewHandler(config.Supabase, repo.User)
+	SupabaseAuthHandler := auth.NewHandler(config.Supabase, repo.User, repo.Ocean)
 
 	apiV1.Route("/auth", func(router fiber.Router) {
 		router.Post("/signup", SupabaseAuthHandler.SignUp)
@@ -92,6 +95,28 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 			id := c.Params("id")
 			return SupabaseAuthHandler.DeleteAccount(c, id)
 		})
+	})
+
+	oceanHandler := ocean.NewHandler(repo.Ocean)
+
+	apiV1.Route("/oceans", func(router fiber.Router) {
+		router.Get("/", oceanHandler.GetOceans)
+		router.Get("/default", oceanHandler.GetDefaultOcean)
+		router.Get("/personal/:id", oceanHandler.GetRandomPersonalOcean)
+		router.Get("/:id", oceanHandler.GetOceanByUserID)
+
+  })
+  
+  TagHandler := tag.NewHandler(repo.Tag)
+	apiV1.Route("/tags", func(router fiber.Router) {
+		router.Get("/", TagHandler.Get)
+  })
+
+	bottleHandler := bottle.NewHandler(repo.Bottle, repo.Tag)
+	apiV1.Route("/bottle", func(r fiber.Router) {
+		r.Delete("/:id", bottleHandler.DeleteBottle)
+		r.Post("/", bottleHandler.CreateBottle)
+		r.Get("/", bottleHandler.GetBottles)
 	})
 
 	// Handle 404 - Route not found
