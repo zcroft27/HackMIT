@@ -4,6 +4,7 @@ import (
 	"context"
 	"hackmit/internal/config"
 	errs "hackmit/internal/errs"
+	"hackmit/internal/handler/auth"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
 	"net/http"
@@ -77,6 +78,20 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 
 	apiV1.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusOK)
+	})
+
+	SupabaseAuthHandler := auth.NewHandler(config.Supabase, repo.User)
+
+	apiV1.Route("/auth", func(router fiber.Router) {
+		router.Post("/signup", SupabaseAuthHandler.SignUp)
+		router.Post("/login", SupabaseAuthHandler.Login)
+		router.Post("/forgot-password", SupabaseAuthHandler.ForgotPassword)
+		router.Post("/reset-password", SupabaseAuthHandler.ResetPassword)
+		router.Post("/sign-out", SupabaseAuthHandler.SignOut)
+		router.Delete("/delete-account/:id", func(c *fiber.Ctx) error {
+			id := c.Params("id")
+			return SupabaseAuthHandler.DeleteAccount(c, id)
+		})
 	})
 
 	// Handle 404 - Route not found
