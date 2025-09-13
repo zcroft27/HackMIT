@@ -18,7 +18,7 @@ type OceanRepository struct {
 
 func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.GetOceansRequest) ([]models.Ocean, error) {
 	query := `
-        SELECT DISTINCT o.id, o.name, o.description, o.user_id, o.created_at
+        SELECT DISTINCT o.id, o.name, o.description, o.user_id
         FROM ocean o
     `
 
