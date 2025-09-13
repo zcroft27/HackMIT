@@ -2,7 +2,7 @@ package auth
 
 import (
 	"fmt"
-	"hackmit/internal/auth"
+	"hackmit/internal/service/auth"
 	"strconv"
 	"time"
 
