@@ -23,6 +23,7 @@ type OceanRepository interface {
 
 type TagRepository interface {
 	GetTags(ctx context.Context, filterParams models.GetTagsRequest) ([]models.Tag, error)
+	GetDefaultTag(ctx context.Context) (*models.Tag, error)
 }
 
 type Repository struct {

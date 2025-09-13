@@ -7,6 +7,6 @@ type Tag struct {
 }
 
 type GetTagsRequest struct {
-	ExcludeDefault *bool   `json:"exclude_default,omitempty"`
+	IncludeDefault *bool   `json:"include_default,omitempty"`
 	Name           *string `json:"name,omitempty"`
 }
