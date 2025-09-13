@@ -57,7 +57,7 @@ func (r *OceanRepository) GetOceans(ctx context.Context, filterParams models.Get
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	query += " ORDER BY o.created_at DESC"
+	//query += " ORDER BY o.created_at DESC"
 
 	// Execute query
 	rows, err := r.db.Query(ctx, query, args...)
