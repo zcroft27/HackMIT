@@ -8,8 +8,6 @@ import (
 	"hackmit/internal/errs"
 	"io"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 type Payload struct {
@@ -18,7 +16,7 @@ type Payload struct {
 }
 
 type userSignupResponse struct {
-	ID uuid.UUID `json:"id"`
+	ID string `json:"id"`
 }
 
 type signupResponse struct {
@@ -73,12 +71,17 @@ func SupabaseSignup(cfg *config.Supabase, email string, password string) (signup
 		return signupResponse{}, errs.BadRequest(fmt.Sprintf("failed to login %d, %s", resp.StatusCode, body))
 	}
 
+	// In SupabaseSignup function, after reading the response body:
+	fmt.Printf("Raw Supabase response: %s\n", string(body))
+
 	// Parse the response
 	var response signupResponse
 	if err := json.Unmarshal(body, &response); err != nil {
 		fmt.Println("Error parsing response:", err)
 		return signupResponse{}, errs.BadRequest("failed to parse response")
 	}
+
+	fmt.Printf("Parsed user ID: %s\n", response.User.ID)
 
 	// Return the access token
 	return response, nil
