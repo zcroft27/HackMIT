@@ -17,13 +17,14 @@ const bottleImageUrls = [
 const boatImageUrl = "/boat.png";
 const parchmentImageUrl = "/parchment.png";
 
-const NUM_BOTTLES = 30;
+const NUM_BOTTLES = 25;
 const BOTTLE_SPEED = 0.5;
 const BOTTLE_WIDTH = 100;
 const BOTTLE_HEIGHT = 100;
 const BOB_AMPLITUDE = 5;
 const BOB_SPEED_MIN = 0.01;
 const BOB_SPEED_MAX = 0.03;
+const VERTICAL_ZONES = 6;
 
 const BOAT_AMPLITUDE = 15;
 const BOAT_SPEED = 0.5;
@@ -118,76 +119,88 @@ const OceanApp = () => {
 
   // Initialize bottles
   useEffect(() => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const spacing = width / NUM_BOTTLES;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const horizontalSpacing = width / NUM_BOTTLES; // Normal horizontal distribution
 
-    const initialBottles: Bottle[] = Array.from({ length: NUM_BOTTLES }).map(
-      (_, i) => {
-        const baseX = i * spacing + spacing / 2;
-        const jitter = (spacing - BOTTLE_WIDTH) / 2;
-        const x = baseX + (Math.random() * 2 - 1) * jitter * 0.3;
-        const baseY = Math.random() * (height - BOTTLE_HEIGHT);
-        const bobOffset = Math.random() * Math.PI * 2;
-        const bobSpeed =
-          BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN);
-        const img = getRandomBottleImage();
-        const y = baseY;
-        const rotation = Math.random() * 10 - 5;
+  const initialBottles: Bottle[] = Array.from({ length: NUM_BOTTLES }).map(
+    (_, i) => {
+      // Normal horizontal spacing
+      const baseX = i * horizontalSpacing + horizontalSpacing / 2;
+      
+      // Small horizontal jitter
+      const jitter = Math.min(horizontalSpacing * 0.3, 50);
+      const x = baseX + (Math.random() * 2 - 1) * jitter;
+      
+      // Distribute across vertical zones
+      const zoneHeight = (height - BOTTLE_HEIGHT * 2) / VERTICAL_ZONES;
+      const zone = Math.floor(Math.random() * VERTICAL_ZONES); // Random zone assignment
+      const baseY = (zoneHeight * zone) + BOTTLE_HEIGHT + (Math.random() * zoneHeight * 0.8);
+      
+      const bobOffset = Math.random() * Math.PI * 2;
+      const bobSpeed = BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN);
+      const img = getRandomBottleImage();
+      const rotation = Math.random() * 10 - 5;
 
-        return { id: i, x, y, baseY, bobOffset, bobSpeed, img, rotation };
-      }
-    );
+      return { id: i, x, y: baseY, baseY, bobOffset, bobSpeed, img, rotation };
+    }
+  );
 
-    setBottles(initialBottles);
+  setBottles(initialBottles);
   }, []);
 
-  useEffect(() => {
-    const animate = () => {
-      timeRef.current += 1;
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+// Updated animation with vertical zone respawn
+useEffect(() => {
+  const animate = () => {
+    timeRef.current += 1;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
-      // Bottles
-      if (!popupBottle && !showCreateBottleModal) {
-        setBottles((prev) =>
-          prev.map((b) => {
-            let newX = b.x - BOTTLE_SPEED;
-            let newBaseY = b.baseY;
-            let newImg = b.img;
-            let newRotation = b.rotation;
+    if (!popupBottle && !showCreateBottleModal) {
+      setBottles((prev) =>
+        prev.map((b) => {
+          let newX = b.x - BOTTLE_SPEED;
+          let newBaseY = b.baseY;
+          let newImg = b.img;
+          let newRotation = b.rotation;
 
-            if (newX < -BOTTLE_WIDTH) {
-              newX = width + Math.random() * width * 0.5;
-              newBaseY = Math.random() * (height - BOTTLE_HEIGHT);
-              newImg = getRandomBottleImage();
-              newRotation = Math.random() * 10 - 5;
-            }
+          if (newX < -BOTTLE_WIDTH) {
+            // Normal horizontal respawn
+            newX = width + Math.random() * width * 0.5;
+            
+            // Random vertical zone respawn
+            const zoneHeight = (height - BOTTLE_HEIGHT * 2) / VERTICAL_ZONES;
+            const zone = Math.floor(Math.random() * VERTICAL_ZONES);
+            newBaseY = (zoneHeight * zone) + BOTTLE_HEIGHT + (Math.random() * zoneHeight * 0.8);
+            
+            newImg = getRandomBottleImage();
+            newRotation = Math.random() * 10 - 5;
+          }
 
-            const newY =
-              newBaseY +
-              Math.sin(timeRef.current * b.bobSpeed + b.bobOffset) *
-                BOB_AMPLITUDE;
+          const newY =
+            newBaseY +
+            Math.sin(timeRef.current * b.bobSpeed + b.bobOffset) *
+              BOB_AMPLITUDE;
 
-            return {
-              ...b,
-              x: newX,
-              baseY: newBaseY,
-              y: newY,
-              img: newImg,
-              rotation: newRotation,
-            };
-          })
-        );
-      }
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
+          return {
+            ...b,
+            x: newX,
+            baseY: newBaseY,
+            y: newY,
+            img: newImg,
+            rotation: newRotation,
+          };
+        })
+      );
+    }
 
     animationRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
+  };
+
+  animationRef.current = requestAnimationFrame(animate);
+  return () => {
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+  };
   }, [popupBottle, showCreateBottleModal]);
 
   // Close popup on outside click
