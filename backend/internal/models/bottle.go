@@ -31,6 +31,6 @@ type GetBottlesRequest struct {
 }
 
 type GetRandomBottleRequest struct {
-	OceanID      int  `query:"ocean_id"`
-	SeenByUserId *int `query:"seen_by_user_id,omitempty"`
+	OceanID      int        `query:"ocean_id"`
+	SeenByUserId *uuid.UUID `query:"seen_by_user_id,omitempty"`
 }
