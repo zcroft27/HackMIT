@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "./UserContext";
-import { getBottle } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -409,55 +408,6 @@ const OceanApp = () => {
           animation: "scrollOcean 40s linear infinite",
         }}
       />
-
-      {/* Bottles */}
-      {bottles.map((b) => (
-  <img
-    key={b.id}
-    src={b.img}
-    alt="Bottle"
-    onClick={async (e) => {
-      e.stopPropagation();
-      if (!popupBottle && !isLoading) {
-        setPopupBottle(b);
-        setIsLoading(true);
-        
-        try {
-          // Build query parameters
-          const params = new URLSearchParams({
-            ocean_id: oceanID, // You'll need to add this to your component
-          });
-          
-          // Add user_id if logged in
-          if (userID) {
-            params.append('seen_by_user_id', userID);
-          }
-          
-          const response = await getBottle(oceanID, userID);
-          const data = response.data;
-          setMessageContent(data.message || "The ocean whispers secrets...");
-        } catch (error) {
-          console.error('Failed to fetch bottle message:', error);
-          setMessageContent("The ocean's connection is turbulent...");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    }}
-    style={{
-      position: "absolute",
-      left: b.x,
-      top: b.y,
-      width: BOTTLE_WIDTH,
-      height: BOTTLE_HEIGHT,
-      cursor: "pointer",
-      zIndex: 5,
-      userSelect: "none",
-      transform: `rotate(${b.rotation}deg)`,
-    }}
-    draggable={false}
-  />
-))}
 
       {/* Login/Personal Ocean Button */}
       <button
