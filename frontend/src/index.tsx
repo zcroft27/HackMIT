@@ -3,13 +3,16 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import OceanApp from './OceanApp';
 import reportWebVitals from './reportWebVitals';
+import { UserProvider } from './UserContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
+    <UserProvider>
     <OceanApp />
+    </UserProvider>
   </React.StrictMode>
 );
 
