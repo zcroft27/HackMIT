@@ -145,9 +145,9 @@ useEffect(() => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, []);
 
@@ -229,33 +229,58 @@ useEffect(() => {
 ))}
 
       {/* Popup */}
-{popupBottle && (
-  <div
-    ref={popupRef}
-    style={{
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      padding: "1.5rem 2rem",
-      zIndex: 20,
-      color: "white",
-      textAlign: "center",
-      background: "black", // pixel-style purple
-      border: "4px solid #fff",
-      boxShadow: "0 0 0 4px #000", // chunky border
-      fontFamily: "'Press Start 2P', cursive", // pixel font
-      fontSize: "14px",
-      lineHeight: "1.5",
-      textShadow: "2px 2px #000",
-      imageRendering: "pixelated",
-    }}
-  >
-    <p style={{ margin: 0 }}>
-      {isLoading ? "Reading the message..." : messageContent}
-    </p>
-  </div>
-)}
+      {popupBottle && (
+        <div
+          ref={popupRef}
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            padding: "1.5rem 2rem",
+            zIndex: 20,
+            color: "white",
+            textAlign: "center",
+            background: "black",
+            border: "4px solid #fff",
+            boxShadow: "0 0 0 4px #000",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "14px",
+            lineHeight: "1.5",
+            textShadow: "2px 2px #000",
+            imageRendering: "pixelated",
+          }}
+        >
+          {/* Close X button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setPopupBottle(null);
+              setMessageContent("");
+            }}
+            style={{
+              position: "absolute",
+              top: "8px",
+              right: "8px",
+              background: "transparent",
+              border: "none",
+              color: "white",
+              fontSize: "18px",
+              cursor: "pointer",
+              fontFamily: "'Press Start 2P', cursive",
+              textShadow: "2px 2px #000",
+              padding: "0",
+              lineHeight: "1",
+            }}
+          >
+            ✕
+          </button>
+          
+          <p style={{ margin: 0 }}>
+            {isLoading ? "Reading the message..." : messageContent}
+          </p>
+        </div>
+      )}
 
 
 
