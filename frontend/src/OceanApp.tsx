@@ -27,9 +27,9 @@ const BOB_AMPLITUDE = 5;
 const BOB_SPEED_MIN = 0.01;
 const BOB_SPEED_MAX = 0.03;
 const VERTICAL_ZONES = 6;
-
-const BOAT_AMPLITUDE = 15;
-const BOAT_SPEED = 0.5;
+const DUCK_SPAWN_INTERVAL = 20000; // 20 seconds
+const duckImageUrl = "/duck.png";
+const DUCK_SPEED = 1.0;
 
 type Bottle = {
   id: number;
@@ -65,11 +65,92 @@ const OceanApp = () => {
   const popupRef = useRef<HTMLDivElement>(null);
   const createBottleRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
+  const duckTimeRef = useRef(0);
   const animationRef = useRef<number | null>(null);
   const [currentOcean, setCurrentOcean] = useState<Ocean | null>(null);
   const [messageContent, setMessageContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+
+  // Duck state
+  const [duck, setDuck] = useState<{ 
+    x: number; 
+    y: number; 
+    baseY: number;
+    bobOffset: number;
+    bobSpeed: number;
+    active: boolean 
+  }>({
+    x: -100,
+    y: 0,
+    baseY: 0,
+    bobOffset: 0,
+    bobSpeed: 0.02,
+    active: false,
+  });
+  const duckAnimationRef = useRef<number | null>(null);
+
+  // Duck animation effect
+  useEffect(() => {
+    let duckDirection = Math.random() > 0.5 ? 1 : -1;
+    let duckBaseY = Math.random() * (window.innerHeight - 200) + 100;
+    let duckX = duckDirection === 1 ? -100 : window.innerWidth + 100;
+
+    const spawnDuck = () => {
+      const bobOffset = Math.random() * Math.PI * 5;
+      const bobSpeed = BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN) * 5;
+      
+      setDuck({ 
+        x: duckX, 
+        y: duckBaseY, 
+        baseY: duckBaseY,
+        bobOffset: bobOffset,
+        bobSpeed: bobSpeed,
+        active: true 
+      });
+      
+      duckTimeRef.current = 0;
+      
+      const animateDuck = () => {
+        duckTimeRef.current += 1;
+        duckX += duckDirection * DUCK_SPEED;
+        
+        // Calculate bobbing Y position
+        const bobY = duckBaseY + Math.sin(duckTimeRef.current * bobSpeed + bobOffset) * BOB_AMPLITUDE;
+        
+        setDuck((prev) => ({
+          ...prev,
+          x: duckX,
+          y: bobY,
+        }));
+        
+        if (
+          (duckDirection === 1 && duckX < window.innerWidth + 100) ||
+          (duckDirection === -1 && duckX > -100)
+        ) {
+          duckAnimationRef.current = requestAnimationFrame(animateDuck);
+        } else {
+          setDuck((prev) => ({ ...prev, active: false }));
+        }
+      };
+      duckAnimationRef.current = requestAnimationFrame(animateDuck);
+    };
+
+    const interval = setInterval(() => {
+      duckDirection = Math.random() > 0.5 ? 1 : -1;
+      duckBaseY = Math.random() * (window.innerHeight - 200) + 100;
+      duckX = duckDirection === 1 ? -100 : window.innerWidth + 100;
+      spawnDuck();
+    }, DUCK_SPAWN_INTERVAL);
+
+    // Initial spawn
+    spawnDuck();
+
+    return () => {
+      clearInterval(interval);
+      if (duckAnimationRef.current) cancelAnimationFrame(duckAnimationRef.current);
+    };
+  }, []);
+
   // Create bottle form states
   const [bottleContent, setBottleContent] = useState<string>("");
   const [bottleAuthor, setBottleAuthor] = useState<string>("");
@@ -518,6 +599,27 @@ useEffect(() => {
             draggable={false}
             />
       ))}
+
+      {/* Duck */}
+      {duck.active && (
+        <img
+          src={duckImageUrl}
+          alt="Duck"
+          style={{
+            position: "absolute",
+            left: duck.x,
+            top: duck.y,
+            width: "80px",
+            height: "auto",
+            zIndex: 6,
+            userSelect: "none",
+            transform: duck.x < window.innerWidth / 2 ? "scaleX(-1)" : "scaleX(1)",
+            imageRendering: "pixelated",
+            filter: "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))",
+          }}
+          draggable={false}
+        />
+      )}
 
       {/* Personal Ocean Lighthouse - Only show when NOT on personal ocean */}
       {user && !isPersonalOcean && (
