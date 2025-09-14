@@ -15,8 +15,8 @@ const parchmentImageUrl = "/parchment.png";
 
 const NUM_BOTTLES = 30;
 const BOTTLE_SPEED = 0.5;
-const BOTTLE_WIDTH = 350;
-const BOTTLE_HEIGHT = 350;
+const BOTTLE_WIDTH = 100;
+const BOTTLE_HEIGHT = 100;
 const BOB_AMPLITUDE = 5;
 const BOB_SPEED_MIN = 0.01;
 const BOB_SPEED_MAX = 0.03;
@@ -170,26 +170,30 @@ useEffect(() => {
       {/* Bottles */}
       {bottles.map((b) => (
         <img
-          key={b.id}
-          src={b.img}
-          alt="Bottle"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!popupBottle) setPopupBottle(b);
-          }}
-          style={{
-            position: "absolute",
-            left: b.x,
-            top: b.y,
-            width: BOTTLE_WIDTH,
-            height: BOTTLE_HEIGHT,
-            cursor: "pointer",
-            zIndex: 5,
-            userSelect: "none",
-            transform: `rotate(${b.rotation}deg)`, // apply tilt
-          }}
-          draggable={false}
-        />
+            key={b.id}
+            src={b.img}
+            alt="Bottle"
+            onClick={(e) => {
+                e.stopPropagation();
+                if (!popupBottle) setPopupBottle(b);
+            }}
+            style={{
+                position: "absolute",
+                left: b.x,
+                top: b.y,
+                maxWidth: BOTTLE_WIDTH,   // limit width
+                maxHeight: BOTTLE_HEIGHT, // limit height
+                width: "auto",            // keep ratio
+                height: "auto",           // keep ratio
+                cursor: "pointer",
+                zIndex: 5,
+                userSelect: "none",
+                transform: `rotate(${b.rotation}deg)`,
+                objectFit: "contain",     // ensures no squishing
+            }}
+            draggable={false}
+            />
+
       ))}
 
       {/* Popup */}
