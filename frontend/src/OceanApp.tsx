@@ -396,16 +396,17 @@ const OceanApp = () => {
       {/* Background */}
       <div
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "200%",
-          height: "120%", // bigger so we can move vertically too
-          backgroundImage: `url('${oceanImageUrl}')`,
-          backgroundRepeat: "repeat",
-          backgroundSize: "auto 100%",
-          backgroundPosition: "0 0",
-          animation: "scrollOcean 40s linear infinite",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "200%",
+            height: "120%",
+            backgroundImage: `url('${oceanImageUrl}')`,
+            backgroundRepeat: "repeat",
+            backgroundSize: "auto 100%",
+            backgroundPosition: "0 0",
+            animation: "scrollOcean 40s linear infinite",
+            animationPlayState: popupBottle || showAuthModal ? "paused" : "running",
         }}
       />
 
