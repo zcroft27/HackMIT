@@ -59,10 +59,10 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 
 	// Use CORS middleware to configure CORS and handle preflight/OPTIONS requests.
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://castaway.zachlearns.com,",
+		AllowOrigins:     "*",
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS", // Using these methods.
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
-		AllowCredentials: true, // Allow cookies
+		AllowCredentials: false, // Allow cookies
 		ExposeHeaders:    "Content-Length, X-Request-ID",
 	}))
 
