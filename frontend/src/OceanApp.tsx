@@ -331,9 +331,9 @@ const OceanApp = () => {
                 setIsLoading(true);
 
                 try {
-                  const response = await getBottle(oceanID, userID);
-                  const data = response.data;
-                  setMessageContent(data.content || "The ocean whispers secrets...");
+                    const response = await getBottle(oceanID, userID);
+                    const data = response.data;
+                    setMessageContent(data.content || "The ocean whispers secrets...");
                 } catch (error) {
                   console.error('Failed to fetch bottle message:', error);
                   setMessageContent("The ocean's connection is turbulent...");
@@ -361,7 +361,7 @@ const OceanApp = () => {
 
       ))}
 
-      {/* Personal Ocean Floating Island - Only show when NOT on personal ocean */}
+      {/* Personal Ocean Lighthouse - Only show when NOT on personal ocean */}
       {user && !isPersonalOcean && (
         <div
           onClick={handlePersonalOcean}
@@ -369,11 +369,15 @@ const OceanApp = () => {
             position: "fixed",
             top: "20px",
             right: "20px",
-            width: "120px",
-            height: "120px",
+            width: "70",
+            height: "140px",
             cursor: "pointer",
             zIndex: 15,
             animation: "floatIsland 3s ease-in-out infinite",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.5rem",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.filter = "brightness(1.3)";
@@ -382,88 +386,22 @@ const OceanApp = () => {
             e.currentTarget.style.filter = "brightness(1)";
           }}
         >
-          {/* Island Base */}
-          <div
+          {/* Lighthouse Image */}
+          <img
+            src="/lighthouse.png"
+            alt="Lighthouse"
             style={{
-              position: "absolute",
-              bottom: "20px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "80px",
-              height: "40px",
-              background: "#D2691E",
-              borderRadius: "50%",
-              border: "3px solid #8B4513",
-              boxShadow: "0 4px 0 #654321",
+              width: "50px",
+              imageRendering: "pixelated",
+              pointerEvents: "none",
+              filter: "drop-shadow(0 0 10px rgba(255, 215, 0, 0.5))",
             }}
-          />
-          
-          {/* Sand */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "25px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "70px",
-              height: "30px",
-              background: "#F4A460",
-              borderRadius: "50%",
-            }}
-          />
-          
-          {/* Palm Tree Trunk */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "35px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "8px",
-              height: "40px",
-              background: "#8B4513",
-              borderLeft: "2px solid #654321",
-              borderRight: "2px solid #654321",
-            }}
-          />
-          
-          {/* Palm Leaves */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "70px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "60px",
-              height: "30px",
-              background: "#228B22",
-              clipPath: "polygon(50% 0%, 0% 100%, 20% 80%, 40% 90%, 50% 70%, 60% 90%, 80% 80%, 100% 100%)",
-              filter: "drop-shadow(2px 2px 0 #006400)",
-            }}
-          />
-          
-          {/* Glowing Star */}
-          <div
-            style={{
-              position: "absolute",
-              top: "0",
-              right: "10px",
-              width: "20px",
-              height: "20px",
-              background: "#FFD700",
-              clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-              animation: "pulse 2s ease-in-out infinite",
-              filter: "drop-shadow(0 0 10px #FFD700)",
-            }}
+            draggable={false}
           />
           
           {/* Text */}
           <div
             style={{
-              position: "absolute",
-              bottom: "-5px",
-              left: "50%",
-              transform: "translateX(-50%)",
               color: "white",
               fontFamily: "'Press Start 2P', cursive",
               fontSize: "10px",
@@ -508,34 +446,6 @@ const OceanApp = () => {
           Logout
         </button>
       )}
-
-      {/* Bottles */}
-      {bottles.map((b) => (
-        <img
-          key={b.id}
-          src={b.img}
-          alt="Bottle"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!popupBottle) setPopupBottle(b);
-          }}
-          style={{
-            position: "absolute",
-            left: b.x,
-            top: b.y,
-            maxWidth: BOTTLE_WIDTH,
-            maxHeight: BOTTLE_HEIGHT,
-            width: "auto",
-            height: "auto",
-            cursor: "pointer",
-            zIndex: 5,
-            userSelect: "none",
-            transform: `rotate(${b.rotation}deg)`,
-            objectFit: "contain",
-          }}
-          draggable={false}
-        />
-      ))}
 
       {/* Auth Modal */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
