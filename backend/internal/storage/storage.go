@@ -20,6 +20,7 @@ type BottleRepository interface {
 	DeleteBottle(ctx context.Context, bottleId int) (string, error)
 	GetBottles(ctx context.Context, filterParams models.GetBottlesRequest) ([]models.Bottle, error)
 	GetBottlesByUser(ctx context.Context, userId int) ([]models.Bottle, error)
+	GetRandomBottle(ctx context.Context, filterParams models.GetRandomBottleRequest, ocean models.Ocean) (*models.Bottle, error)
 }
 
 type OceanRepository interface {
@@ -28,6 +29,7 @@ type OceanRepository interface {
 	GetRandomPersonalOcean(ctx context.Context, currentUserId uuid.UUID) (*models.Ocean, error)
 	GetOceanByUser(ctx context.Context, userId uuid.UUID) (*models.Ocean, error)
 	CreateOcean(ctx context.Context, name *string, description *string, userId uuid.UUID) (*models.Ocean, error)
+	GetOceanById(ctx context.Context, oceanId int) (*models.Ocean, error)
 }
 
 type TagRepository interface {
