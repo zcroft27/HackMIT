@@ -190,6 +190,16 @@ func (r *OceanRepository) CreateOcean(ctx context.Context, name *string, descrip
 		return nil, fmt.Errorf("error creating ocean: %w", err)
 	}
 
+	tagOceanQuery := `
+		INSERT INTO tag_ocean (tag_id, ocean_id)
+		VALUES
+			((SELECT id FROM tag WHERE name = 'Personal' LIMIT 1), $1)
+	`
+	_, err = r.db.Exec(ctx, tagOceanQuery, ocean.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error associating tags with new ocean: %w", err)
+	}
+
 	return &ocean, nil
 }
 
