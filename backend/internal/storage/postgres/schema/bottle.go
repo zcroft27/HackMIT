@@ -121,6 +121,7 @@ func (r *BottleRepository) GetRandomBottle(ctx context.Context, filterParams mod
 	queryArgs := []any{filterParams.OceanID}
 	var_counter := 2
 
+	fmt.Println("get random bottle, user id: ", ocean.UserID)
 	if ocean.UserID != nil {
 		query = `SELECT b.id, b.content, b.author, b.tag_id, b.user_id, b.location_from, b.created_at
 			FROM bottle b
@@ -143,6 +144,7 @@ func (r *BottleRepository) GetRandomBottle(ctx context.Context, filterParams mod
 			)`
 	}
 
+	fmt.Println("get random bottle, seen by user id: ", filterParams.SeenByUserId)
 	// filter out bottles already seen by users
 	if filterParams.SeenByUserId != nil {
 		query += fmt.Sprintf(` AND b.id NOT IN (
@@ -169,6 +171,7 @@ func (r *BottleRepository) GetRandomBottle(ctx context.Context, filterParams mod
 		return nil, fmt.Errorf("error collecting bottle: %w", err)
 	}
 
+	fmt.Println("submitting seen botesl: ")
 	if filterParams.SeenByUserId != nil {
 		query = `
 			INSERT INTO seen_bottles (user_id, bottle_id)
