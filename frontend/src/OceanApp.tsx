@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "./UserContext";
 import { AuthModal } from "./AuthModal";
-import { getDefaultOcean, getOceanByUserID } from "./services/api";
+import { getBottle, getDefaultOcean, getOceanByUserID } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -14,6 +14,7 @@ const bottleImageUrls = [
   "/bottle7.png",
   "/bottle8.png",
 ];
+const boatImageUrl = "/boat.png";
 const parchmentImageUrl = "/parchment.png";
 
 const NUM_BOTTLES = 30;
@@ -23,6 +24,9 @@ const BOTTLE_HEIGHT = 100;
 const BOB_AMPLITUDE = 5;
 const BOB_SPEED_MIN = 0.01;
 const BOB_SPEED_MAX = 0.03;
+
+const BOAT_AMPLITUDE = 15;
+const BOAT_SPEED = 0.5;
 
 type Bottle = {
   id: number;
@@ -101,14 +105,14 @@ const OceanApp = () => {
     setBottles(initialBottles);
   }, []);
 
-  // Animate bottles
   useEffect(() => {
     const animate = () => {
-      if (!popupBottle) {
-        timeRef.current += 1;
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+      timeRef.current += 1;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
+      // Bottles
+      if (!popupBottle) {
         setBottles((prev) =>
           prev.map((b) => {
             let newX = b.x - BOTTLE_SPEED;
@@ -139,6 +143,13 @@ const OceanApp = () => {
           })
         );
       }
+
+      // Boat bobbing
+      const elapsed = timeRef.current / 60; // convert to seconds-ish
+      const newBoatY =
+        boatBaseY +
+        Math.sin(elapsed * BOAT_SPEED + boatOffset) * BOAT_AMPLITUDE;
+      setBoatY(newBoatY);
 
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -190,16 +201,17 @@ const OceanApp = () => {
       {/* Background */}
       <div
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "200%",
-          height: "120%",
-          backgroundImage: `url('${oceanImageUrl}')`,
-          backgroundRepeat: "repeat",
-          backgroundSize: "auto 100%",
-          backgroundPosition: "0 0",
-          animation: "scrollOcean 40s linear infinite",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "200%",
+            height: "120%",
+            backgroundImage: `url('${oceanImageUrl}')`,
+            backgroundRepeat: "repeat",
+            backgroundSize: "auto 100%",
+            backgroundPosition: "0 0",
+            animation: "scrollOcean 40s linear infinite",
+            animationPlayState: popupBottle || showAuthModal ? "paused" : "running",
         }}
       />
 
@@ -265,6 +277,92 @@ const OceanApp = () => {
           Login
         </button>
       )}
+
+      <div
+        onClick={() => alert("Going to the explore page!")}
+        style={{
+          position: "fixed",
+          top: "20px",
+          left: "20px",
+          padding: "0.5rem 1rem",
+          background: "black",
+          border: "4px solid #fff",
+          boxShadow: "0 0 0 4px #000",
+          color: "white",
+          fontFamily: "'Press Start 2P', cursive",
+          fontSize: "12px",
+          textAlign: "center",
+          cursor: "pointer",
+          zIndex: 25,
+          display: "flex",
+          flexDirection: "column", // stack vertically
+          alignItems: "center",
+          gap: "0.25rem",
+          imageRendering: "pixelated",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "#333";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "black";
+        }}
+      >
+        <img
+          src={boatImageUrl}
+          alt="Boat"
+          style={{
+            width: "90px",
+            height: "auto",
+            imageRendering: "pixelated",
+            pointerEvents: "none",
+          }}
+          draggable={false}
+        />
+        <span>Go Explore</span>
+      </div>
+
+      {/* Bottles */}
+      {bottles.map((b) => (
+        <img
+            key={b.id}
+            src={b.img}
+            alt="Bottle"
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!popupBottle && !isLoading) {
+                setPopupBottle(b);
+                setIsLoading(true);
+
+                try {
+                  const response = await getBottle(oceanID, userID);
+                  const data = response.data;
+                  setMessageContent(data.content || "The ocean whispers secrets...");
+                } catch (error) {
+                  console.error('Failed to fetch bottle message:', error);
+                  setMessageContent("The ocean's connection is turbulent...");
+                } finally {
+                  setIsLoading(false);
+                }
+              }
+            }}
+            style={{
+                position: "absolute",
+                left: b.x,
+                top: b.y,
+                maxWidth: BOTTLE_WIDTH,   // limit width
+                maxHeight: BOTTLE_HEIGHT, // limit height
+                width: "auto",            // keep ratio
+                height: "auto",           // keep ratio
+                cursor: "pointer",
+                zIndex: 5,
+                userSelect: "none",
+                transform: `rotate(${b.rotation}deg)`,
+                objectFit: "contain",     // ensures no squishing
+            }}
+            draggable={false}
+            />
+
+      ))}
 
       {/* Personal Ocean Floating Island - Only show when NOT on personal ocean */}
       {user && !isPersonalOcean && (
