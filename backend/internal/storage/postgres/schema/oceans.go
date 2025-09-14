@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"hackmit/internal/errs"
 	"hackmit/internal/models"
 	"strings"
 
@@ -171,6 +172,27 @@ func (r *OceanRepository) CreateOcean(ctx context.Context, name *string, descrip
 	}
 
 	return &ocean, nil
+}
+
+func (r *OceanRepository) GetOceanById(ctx context.Context, oceanId int) (*models.Ocean, error) {
+	query := `
+		SELECT id, name, description, user_id
+		FROM ocean
+		WHERE id=$1
+		LIMIT 1
+	`
+	companyRows, err := r.db.Query(ctx, query, oceanId)
+	if err != nil {
+		return nil, err
+	}
+	defer companyRows.Close()
+
+	company, err := pgx.CollectOneRow(companyRows, pgx.RowToStructByName[models.Ocean])
+
+	if err != nil {
+		return nil, errs.BadRequest(fmt.Sprintf("Error finding ocean with ocean_id: %s, %s", oceanId, err))
+	}
+	return &company, nil
 }
 
 func NewOceanRepository(db *pgxpool.Pool) *OceanRepository {

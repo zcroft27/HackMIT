@@ -73,12 +73,13 @@ func (r *BottleRepository) DeleteBottle(ctx context.Context, bottleId int) (stri
 }
 
 func (r *BottleRepository) GetBottles(ctx context.Context, filterParams models.GetBottlesRequest) ([]models.Bottle, error) {
-	const query = `SELECT b.id, b.content, b.author, b.tag_id, b.user_id, b.location_from, b.created_at
+	query := `SELECT b.id, b.content, b.author, b.tag_id, b.user_id, b.location_from, b.created_at
 		FROM bottle b
-		WHERE tag_id in (
+		WHERE b.tag_id in (
 			SELECT tag_id FROM tag_ocean
 			WHERE ocean_id = $1
-		);
+		)
+		ORDER BY RANDOM()
 	`
 	fmt.Println(filterParams.OceanID)
 	rows, err := r.db.Query(ctx, query, filterParams.OceanID)
@@ -113,6 +114,60 @@ func (r *BottleRepository) GetBottlesByUser(ctx context.Context, userId int) ([]
 	}
 
 	return bottles, nil
+}
+
+func (r *BottleRepository) GetRandomBottle(ctx context.Context, filterParams models.GetRandomBottleRequest, ocean models.Ocean) (*models.Bottle, error) {
+	var query string
+	queryArgs := []any{filterParams.OceanID}
+	var_counter := 2
+
+	if ocean.UserID != nil {
+		query = `SELECT b.id, b.content, b.author, b.tag_id, b.user_id, b.location_from, b.created_at
+			FROM bottle b
+			WHERE b.tag_id in (
+				SELECT tag_id FROM tag_ocean
+				JOIN tag on tag.id = tag_ocean.tag_id
+				WHERE tag_ocean.ocean_id = $1
+				AND tag.name='Personal'
+			)
+				AND b.user_id = $2
+			`
+		queryArgs = append(queryArgs, *ocean.UserID)
+		var_counter += 1
+	} else {
+		query = `SELECT b.id, b.content, b.author, b.tag_id, b.user_id, b.location_from, b.created_at
+			FROM bottle b
+			WHERE b.tag_id in (
+				SELECT tag_id FROM tag_ocean
+				WHERE tag_ocean.ocean_id = $1
+			)`
+	}
+
+	// filter out bottles already seen by users
+	if filterParams.SeenByUserId != nil {
+		query += fmt.Sprintf(` AND b.id NOT IN (
+			SELECT bottle_id from seen_bottles where user_id = $%d
+		)`, var_counter)
+		queryArgs = append(queryArgs, *filterParams.SeenByUserId)
+	}
+
+	query += ` ORDER BY RANDOM() 
+		LIMIT 1
+	`
+
+	row, err := r.db.Query(ctx, query, queryArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer row.Close()
+
+	bottle, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Bottle])
+
+	if err != nil {
+		return nil, errs.BadRequest(fmt.Sprintf("Error getting bottle %s", err))
+	}
+
+	return &bottle, nil
 }
 
 func NewBottleRepository(db *pgxpool.Pool) *BottleRepository {

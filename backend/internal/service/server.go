@@ -5,8 +5,8 @@ import (
 	"hackmit/internal/config"
 	errs "hackmit/internal/errs"
 	"hackmit/internal/handler/auth"
-	"hackmit/internal/handler/ocean"
 	"hackmit/internal/handler/bottle"
+	"hackmit/internal/handler/ocean"
 	"hackmit/internal/handler/tag"
 	"hackmit/internal/storage"
 	"hackmit/internal/storage/postgres"
@@ -105,18 +105,19 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 		router.Get("/personal/:id", oceanHandler.GetRandomPersonalOcean)
 		router.Get("/:id", oceanHandler.GetOceanByUserID)
 
-  })
-  
-  TagHandler := tag.NewHandler(repo.Tag)
+	})
+
+	TagHandler := tag.NewHandler(repo.Tag)
 	apiV1.Route("/tags", func(router fiber.Router) {
 		router.Get("/", TagHandler.Get)
-  })
+	})
 
-	bottleHandler := bottle.NewHandler(repo.Bottle, repo.Tag)
+	bottleHandler := bottle.NewHandler(repo.Bottle, repo.Tag, repo.Ocean)
 	apiV1.Route("/bottle", func(r fiber.Router) {
 		r.Delete("/:id", bottleHandler.DeleteBottle)
 		r.Post("/", bottleHandler.CreateBottle)
 		r.Get("/", bottleHandler.GetBottles)
+		r.Get("/random", bottleHandler.GetRandom)
 	})
 
 	// Handle 404 - Route not found
