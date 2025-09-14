@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "./UserContext";
+import { getBottle } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -504,9 +505,23 @@ const OceanApp = () => {
             key={b.id}
             src={b.img}
             alt="Bottle"
-            onClick={(e) => {
-                e.stopPropagation();
-                if (!popupBottle) setPopupBottle(b);
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!popupBottle && !isLoading) {
+                setPopupBottle(b);
+                setIsLoading(true);
+
+                try {
+                  const response = await getBottle(oceanID, userID);
+                  const data = response.data;
+                  setMessageContent(data.content || "The ocean whispers secrets...");
+                } catch (error) {
+                  console.error('Failed to fetch bottle message:', error);
+                  setMessageContent("The ocean's connection is turbulent...");
+                } finally {
+                  setIsLoading(false);
+                }
+              }
             }}
             style={{
                 position: "absolute",
