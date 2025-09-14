@@ -463,7 +463,7 @@ useEffect(() => {
             padding: "0.75rem 1.5rem",
             zIndex: 15,
             color: "white",
-            background: "black",
+            background: "rgba(0, 0, 0, 0.8)",
             border: "4px solid #fff",
             boxShadow: "0 0 0 4px #000",
             fontFamily: "'Press Start 2P', cursive",
@@ -491,7 +491,7 @@ useEffect(() => {
           top: "20px",
           left: "20px",
           padding: "0.5rem 1rem",
-          background: "black",
+          background: "rgba(0, 0, 0, 0.8)",
           border: "4px solid #fff",
           boxShadow: "0 0 0 4px #000",
           color: "white",
@@ -683,7 +683,7 @@ useEffect(() => {
             src={lighthouseUrl}
             alt="Lighthouse"
             style={{
-              width: "50px",
+              width: "80px",
               imageRendering: "pixelated",
               pointerEvents: "none",
               filter: "drop-shadow(0 0 10px rgba(255, 215, 0, 0.5))",
