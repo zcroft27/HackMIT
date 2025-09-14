@@ -3,16 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { getRandomPersonalOcean, getOceans, getOceanByUserID } from './services/api';
 import { useUser } from './UserContext';
 
-const exploreBackgroundUrl = "/backgroundBlue.png";
+const exploreBackgroundUrl = "/newExploreBackground.png";
 
-const tealWaypointUrl = "/tealWaypoint.png";
 const redWaypointUrl = "/redWaypoint.png";
-const purpleWaypointUrl = "/purpleWaypoint.png";
-const pinkWaypointUrl = "/pinkWaypoint.png";
-const magentaWaypointUrl = "/magentaWaypoint.png";
-const greyWaypointUrl = "/greyWaypoint.png";
-const greenWaypointUrl = "/greenWaypoint.png";
-const blackWaypointUrl = "/blackWaypoint.png";
 
 // The original polygon points data remains the same
 const sections = [
@@ -48,7 +41,7 @@ const sections = [
     id: "flow6",
     // Right side piece
     polygon: [[75, 45], [90, 40], [100, 25], [100, 70], [88, 75], [80, 55]],
-    waypoints: [[90, 65]]
+    waypoints: [[90, 55]]
   },
   {
     id: "flow7",
@@ -66,7 +59,7 @@ const sections = [
     id: "flow9",
     // Bottom right piece
     polygon: [[80, 55], [88, 75], [100, 70], [100, 100], [65, 100], [70, 72]],
-    waypoints: [[82, 85]]
+    waypoints: [[82, 80]]
   }
 ];
 
@@ -132,14 +125,7 @@ const getWaypointColor = (ocean: Ocean) => {
 };
 
 const waypointImages = {
-  teal: tealWaypointUrl,
   red: redWaypointUrl,
-  purple: purpleWaypointUrl,
-  pink: pinkWaypointUrl,
-  magenta: magentaWaypointUrl,
-  grey: greyWaypointUrl,
-  green: greenWaypointUrl,
-  black: blackWaypointUrl,
 };
 
 const whirlpoolUrl = "/whirlpool.png";
@@ -213,10 +199,6 @@ const Explore = () => {
 
     fetchPersonalOceans();
   }, []);
-
-  const handleBackToOcean = () => {
-    navigate('/');
-  };
 
   const handleWhirlpoolClick = async () => {
     if (isLoading) return;
@@ -314,12 +296,12 @@ const Explore = () => {
           onClick={handlePersonalOcean}
           style={{
             position: "fixed",
-            top: "20px",
-            right: "20px",
+            top: "50px",
+            right: "50px",
             width: "100px",
             height: "80px",
             cursor: "pointer",
-            zIndex: 15,
+            zIndex: 100,
             animation: "floatIsland 3s ease-in-out infinite",
             display: "flex",
             flexDirection: "column",
@@ -340,6 +322,7 @@ const Explore = () => {
               width: "70px",
               imageRendering: "pixelated",
               pointerEvents: "none",
+              zIndex: 100,
               filter: "drop-shadow(0 0 10px rgba(255, 215, 0, 0.5))",
             }}
             draggable={false}
@@ -366,7 +349,7 @@ const Explore = () => {
       {waypointOceanMap.map(({ ocean, position, key }) => {
         const [x, y] = position;
         const color = getWaypointColor(ocean);
-        const waypointImage = waypointImages[color];
+        const waypointImage = redWaypointUrl;
         console.log("Waypoint:", ocean.name, "Color:", color, "Image:", waypointImage);
 
         
@@ -378,62 +361,72 @@ const Explore = () => {
               position: "absolute",
               left: `${x}%`,
               top: `${y}%`,
-              width: "40px",
-              height: "40px",
+              width: "200px",
+              height: "200px",
               transform: "translate(-50%, -50%)",
               zIndex: 10,
               cursor: "pointer",
               transition: "transform 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.2)";
+              e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.1)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
             }}
-            title={ocean.name || 'Personal Ocean'}
           >
-            {waypointImage ? (
-              <img
-                src={waypointImage}
-                alt={ocean.name || 'Personal Ocean'}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                }}
-              />
-            ) : (
-              // Fallback if no waypoint image
+            {/* Inner waypoint image container */}
+            <div style={{ 
+              width: "70px", 
+              height: "70px",
+              position: "relative",
+            }}>
+              {waypointImage ? (
+                <img
+                  src={waypointImage}
+                  alt={ocean.name || 'Personal Ocean'}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                // Fallback if no waypoint image
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: color,
+                    border: "3px solid white",
+                    borderRadius: "50%",
+                    boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                  }}
+                />
+              )}
+              {/* Ocean name label */}
               <div
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: color,
-                  border: "3px solid white",
-                  borderRadius: "50%",
-                  boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                  position: "absolute",
+                  bottom: "-30px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  backgroundColor: "rgba(0, 0, 0, 0.9)",
+                  color: "white",
+                  padding: "4px 8px",
+                  borderRadius: "3px",
+                  fontSize: "12px",
+                  fontFamily: "'Press Start 2P', cursive",
+                  whiteSpace: "nowrap",
+                  pointerEvents: "none",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
                 }}
-              />
-            )}
-            {/* Ocean name label */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "-25px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                backgroundColor: "rgba(0, 0, 0, 0.8)",
-                color: "white",
-                padding: "2px 6px",
-                borderRadius: "3px",
-                fontSize: "10px",
-                fontFamily: "'Press Start 2P', cursive",
-                whiteSpace: "nowrap",
-                pointerEvents: "none",
-              }}
-            >
-              {ocean.name || 'Ocean'}
+              >
+                {ocean.name || 'Ocean'}
+              </div>
             </div>
           </div>
         );
@@ -522,6 +515,126 @@ const Explore = () => {
       >
         ← Back to Ocean
       </button> */}
+
+      {/* Parchment Border Frame - Top */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "40px",
+          backgroundColor: "#f4e4c1",
+          backgroundImage: `
+            radial-gradient(ellipse at top left, rgba(139, 105, 20, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at top right, rgba(92, 51, 23, 0.1) 0%, transparent 50%)
+          `,
+          borderBottom: "4px solid #8b6914",
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)",
+          zIndex: 20,
+        }}
+      />
+      
+      {/* Parchment Border Frame - Bottom */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "40px",
+          backgroundColor: "#f4e4c1",
+          backgroundImage: `
+            radial-gradient(ellipse at bottom left, rgba(139, 105, 20, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(92, 51, 23, 0.1) 0%, transparent 50%)
+          `,
+          borderTop: "4px solid #8b6914",
+          boxShadow: "0 -4px 8px rgba(0, 0, 0, 0.3)",
+          zIndex: 20,
+        }}
+      />
+      
+      {/* Parchment Border Frame - Left */}
+      <div
+        style={{
+          position: "absolute",
+          top: "40px",
+          left: 0,
+          bottom: "40px",
+          width: "40px",
+          backgroundColor: "#f4e4c1",
+          backgroundImage: `
+            radial-gradient(ellipse at left center, rgba(139, 105, 20, 0.1) 0%, transparent 50%)
+          `,
+          borderRight: "4px solid #8b6914",
+          boxShadow: "4px 0 8px rgba(0, 0, 0, 0.3)",
+          zIndex: 20,
+        }}
+      />
+      
+      {/* Parchment Border Frame - Right */}
+      <div
+        style={{
+          position: "absolute",
+          top: "40px",
+          right: 0,
+          bottom: "40px",
+          width: "40px",
+          backgroundColor: "#f4e4c1",
+          backgroundImage: `
+            radial-gradient(ellipse at right center, rgba(139, 105, 20, 0.1) 0%, transparent 50%)
+          `,
+          borderLeft: "4px solid #8b6914",
+          boxShadow: "-4px 0 8px rgba(0, 0, 0, 0.3)",
+          zIndex: 20,
+        }}
+      />
+      
+      {/* Corner pieces for seamless connection */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "44px",
+          height: "44px",
+          backgroundColor: "#f4e4c1",
+          zIndex: 21,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: "44px",
+          height: "44px",
+          backgroundColor: "#f4e4c1",
+          zIndex: 21,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          width: "44px",
+          height: "44px",
+          backgroundColor: "#f4e4c1",
+          zIndex: 21,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 0,
+          width: "44px",
+          height: "44px",
+          backgroundColor: "#f4e4c1",
+          zIndex: 21,
+        }}
+      />
 
       <style>{`
         @keyframes scrollExplore {

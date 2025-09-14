@@ -31,6 +31,13 @@ func (h *Handler) CreateBottle(c *fiber.Ctx) error {
 		filterParams.TagID = &defaultTag.ID
 	}
 
+	textFields := extractTextContent(filterParams)
+	for _, text := range textFields {
+		if text != "" && moderateContent(text) {
+			return errs.BadRequest("Content blocked: Message contains inappropriate content")
+		}
+	}
+
 	bottle, err := h.bottleRepository.CreateBottle(c.Context(), filterParams)
 	if err != nil {
 		return err
