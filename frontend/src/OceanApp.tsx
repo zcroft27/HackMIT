@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from "./UserContext";
 import { AuthModal } from "./AuthModal";
-import { getBottle, getDefaultOcean, getOceanByUserID, getTags, createBottle } from "./services/api";
-import { useNavigate } from 'react-router-dom';
+import { getBottle, getDefaultOcean, getOceanByUserID, getTags, createBottle, getRandomPersonalOcean } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -75,27 +75,39 @@ const OceanApp = () => {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   
   const { user, logout } = useUser();
-
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if we're on the personal ocean page
   const isPersonalOcean = currentOcean?.user_id === user?.id && user !== null;
   // Check if we're on someone else's personal ocean
   const isOthersPersonalOcean = currentOcean?.user_id && currentOcean?.user_id !== user?.id;
 
+  // Handle ocean passed from Explore page
+  useEffect(() => {
+    if (location.state?.ocean) {
+      setCurrentOcean(location.state.ocean);
+      // Clear the state to prevent it from persisting
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   // Fetch default ocean on mount
   useEffect(() => {
-    const fetchDefaultOcean = async () => {
-      try {
-        const response = await getDefaultOcean();
-        setCurrentOcean(response.data);
-      } catch (error) {
-        console.error("Failed to fetch default ocean:", error);
-      }
-    };
+    // Only fetch default ocean if we don't have one from navigation
+    if (!location.state?.ocean) {
+      const fetchDefaultOcean = async () => {
+        try {
+          const response = await getDefaultOcean();
+          setCurrentOcean(response.data);
+        } catch (error) {
+          console.error("Failed to fetch default ocean:", error);
+        }
+      };
 
-    fetchDefaultOcean();
-  }, []);
+      fetchDefaultOcean();
+    }
+  }, [location.state]);
 
   // Fetch tags when create bottle modal opens
   useEffect(() => {
@@ -464,9 +476,10 @@ useEffect(() => {
 
                 try {
                   if (currentOcean) {
+                    console.log('Fetching bottle for ocean ID:', currentOcean.id, 'and user ID:', user?.id);
                     const [response] = await Promise.all([
-                    await getBottle(String(currentOcean.id), user?.id),
-                    new Promise(resolve => setTimeout(resolve, 750))
+                      getBottle(currentOcean.id, user?.id),
+                      new Promise(resolve => setTimeout(resolve, 750))
                     ]);
                     const data = response.data;
                     setMessageContent(data.content || "The ocean whispers secrets...");

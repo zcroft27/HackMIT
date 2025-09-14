@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getRandomPersonalOcean, getOceans, getOceanByUserID } from './services/api';
+import { useUser } from './UserContext';
 
-const exploreBackgroundUrl = "/newExploreBackground.png";
+const exploreBackgroundUrl = "/backgroundBlue.png";
+
+const tealWaypointUrl = "/tealWaypoint.png";
+const redWaypointUrl = "/redWaypoint.png";
+const purpleWaypointUrl = "/purpleWaypoint.png";
+const pinkWaypointUrl = "/pinkWaypoint.png";
+const magentaWaypointUrl = "/magentaWaypoint.png";
+const greyWaypointUrl = "/greyWaypoint.png";
+const greenWaypointUrl = "/greenWaypoint.png";
+const blackWaypointUrl = "/blackWaypoint.png";
 
 // The original polygon points data remains the same
 const sections = [
@@ -42,7 +54,7 @@ const sections = [
     id: "flow7",
     // Bottom left piece
     polygon: [[0, 70], [10, 60], [15, 55], [30, 65], [35, 75], [30, 100], [0, 100]],
-    waypoints: [[18, 85]]
+    //waypoints: [[18, 85]]
   },
   {
     id: "flow8",
@@ -97,12 +109,148 @@ const getUniqueCurvedEdges = (tension = 0.2) => {
   return Array.from(edgeMap.values());
 };
 
+// Waypoint color mapping based on ocean properties
+type Ocean = {
+  user_id?: string | null;
+  name?: string | null;
+  description?: string | null;
+  id: number;
+  // Add other properties if needed
+};
+
+const getWaypointColor = (ocean: Ocean) => {
+  // You can customize this logic based on ocean properties
+  if (ocean.name?.toLowerCase().includes('fitness')) return 'black';
+  if (ocean.name?.toLowerCase().includes('gratitude')) return 'green';
+  if (ocean.name?.toLowerCase().includes('affirmation')) return 'purple';
+  if (ocean.name?.toLowerCase().includes('self')) return 'pink';
+  if (ocean.name?.toLowerCase().includes('question')) return 'red';
+  if (ocean.name?.toLowerCase().includes('activities')) return 'teal';
+  if (ocean.name?.toLowerCase().includes('default')) return 'grey';
+  // Default color
+  return 'magenta';
+};
+
+const waypointImages = {
+  teal: tealWaypointUrl,
+  red: redWaypointUrl,
+  purple: purpleWaypointUrl,
+  pink: pinkWaypointUrl,
+  magenta: magentaWaypointUrl,
+  grey: greyWaypointUrl,
+  green: greenWaypointUrl,
+  black: blackWaypointUrl,
+};
+
 const whirlpoolUrl = "/whirlpool.png";
 
 const Explore = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [personalOceans, setPersonalOceans] = useState<Ocean[]>([]);
+  const [waypointOceanMap, setWaypointOceanMap] = useState<
+    Array<{ position: number[]; sectionId: string; key: string; ocean: Ocean }>
+  >([]);
+    const { user, logout } = useUser();
+  
+
+  useEffect(() => {
+    const fetchPersonalOceans = async () => {
+      try {
+        const response = await getOceans();
+        console.log('All oceans:', response.data);
+        const allOceans = Array.isArray(response.data.oceans)
+          ? response.data.oceans
+          : [];
+
+        // Filter for personal oceans
+        const personal = allOceans.filter((ocean: Ocean) => ocean.user_id === null);
+        setPersonalOceans(personal);
+            
+        
+        // Simple shuffle helper
+        const shuffleArray = <T,>(array: T[]): T[] => {
+          const copy = [...array];
+          for (let i = copy.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [copy[i], copy[j]] = [copy[j], copy[i]];
+          }
+          return copy;
+        };
+
+        const sectionsWithWaypoints = sections.filter(s => s.waypoints && s.waypoints.length > 0);
+        const shuffledSections = shuffleArray(sectionsWithWaypoints);
+
+        const mappedWaypoints = personal
+          .slice(0, shuffledSections.length)
+          .map((ocean: Ocean, idx: number) => {
+            const section = shuffledSections[idx];
+            const position = section.waypoints ? section.waypoints[0] : [0, 0];
+            return {
+              ocean,
+              position,
+              sectionId: section.id,
+              key: `waypoint-${idx}`,
+            };
+          });
+
+        // const mappedWaypoints = personal.slice(0, sectionsWithWaypoints.length).map((ocean: Ocean, idx: number) => {
+        //   const section = sectionsWithWaypoints[idx];
+        //   const position = section.waypoints ? section.waypoints[0] : [0, 0];
+        //   return {
+        //     ocean,
+        //     position,
+        //     sectionId: section.id,
+        //     key: `waypoint-${idx}`,
+        //   };
+        // });
+        
+        setWaypointOceanMap(mappedWaypoints);
+      } catch (error) {
+        console.error('Failed to fetch oceans:', error);
+      }
+    };
+
+    fetchPersonalOceans();
+  }, []);
+
   const handleBackToOcean = () => {
-    window.location.href = '/'; // Navigate back to main ocean
+    navigate('/');
   };
+
+  const handleWhirlpoolClick = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await getRandomPersonalOcean();
+      const randomOcean = response.data;
+      
+      // Navigate to home with the ocean data
+      navigate('/', { state: { ocean: randomOcean } });
+    } catch (error) {
+      console.error('Failed to fetch random personal ocean:', error);
+      alert('Failed to find a personal ocean. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWaypointClick = (ocean: Ocean) => {
+    navigate('/', { state: { ocean } });
+  };
+
+  const handlePersonalOcean = async () => {
+      if (user?.id) {
+        try {
+          const response = await getOceanByUserID(user.id);
+          navigate('/', { state: { ocean: response.data } });
+          console.log("Switched to personal ocean:", response.data);
+        } catch (error) {
+          console.error("Failed to fetch personal ocean:", error);
+        }
+      }
+    };
   
   const uniqueEdges = getUniqueCurvedEdges(0.22);
 
@@ -160,29 +308,140 @@ const Explore = () => {
         ))}
       </svg>
 
-      {/* Waypoints */}
-      {sections.flatMap(section =>
-        section.waypoints.map(([x, y], idx) => (
+
+      {user?.id && (
+        <div
+          onClick={handlePersonalOcean}
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            width: "100px",
+            height: "80px",
+            cursor: "pointer",
+            zIndex: 15,
+            animation: "floatIsland 3s ease-in-out infinite",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.filter = "brightness(1.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.filter = "brightness(1)";
+          }}
+        >
+          <img
+            src="/plane.png"
+            alt="Plane"
+            style={{
+              width: "70px",
+              imageRendering: "pixelated",
+              pointerEvents: "none",
+              filter: "drop-shadow(0 0 10px rgba(255, 215, 0, 0.5))",
+            }}
+            draggable={false}
+          />
+          
           <div
-            key={`${section.id}-wp${idx}`}
+            style={{
+              color: "white",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "10px",
+              textShadow: "2px 2px #000",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+            }}
+          >
+            My Ocean
+          </div>
+        </div>
+      )}
+
+      
+
+      {/* Ocean Waypoints */}
+      {waypointOceanMap.map(({ ocean, position, key }) => {
+        const [x, y] = position;
+        const color = getWaypointColor(ocean);
+        const waypointImage = waypointImages[color];
+        console.log("Waypoint:", ocean.name, "Color:", color, "Image:", waypointImage);
+
+        
+        return (
+          <div
+            key={key}
+            onClick={() => handleWaypointClick(ocean)}
             style={{
               position: "absolute",
               left: `${x}%`,
               top: `${y}%`,
-              width: "12px",
-              height: "12px",
-              backgroundColor: "yellow",
-              border: "2px solid black",
-              borderRadius: "50%",
+              width: "40px",
+              height: "40px",
               transform: "translate(-50%, -50%)",
               zIndex: 10,
+              cursor: "pointer",
+              transition: "transform 0.3s ease",
             }}
-          />
-        ))
-      )}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
+            }}
+            title={ocean.name || 'Personal Ocean'}
+          >
+            {waypointImage ? (
+              <img
+                src={waypointImage}
+                alt={ocean.name || 'Personal Ocean'}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            ) : (
+              // Fallback if no waypoint image
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: color,
+                  border: "3px solid white",
+                  borderRadius: "50%",
+                  boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+                }}
+              />
+            )}
+            {/* Ocean name label */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-25px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                backgroundColor: "rgba(0, 0, 0, 0.8)",
+                color: "white",
+                padding: "2px 6px",
+                borderRadius: "3px",
+                fontSize: "10px",
+                fontFamily: "'Press Start 2P', cursive",
+                whiteSpace: "nowrap",
+                pointerEvents: "none",
+              }}
+            >
+              {ocean.name || 'Ocean'}
+            </div>
+          </div>
+        );
+      })}
 
-      {/* Whirlpool in flow8 section */}
+      {/* Whirlpool in flow8 section - Now clickable */}
       <div
+        onClick={handleWhirlpoolClick}
         style={{
           position: "absolute",
           left: "17.5%", // Center of flow7 (0-35 range)
@@ -191,19 +450,47 @@ const Explore = () => {
           height: "35%", // Proportional height
           transform: "translateX(-50%)", // Center horizontally
           zIndex: 6,
-          pointerEvents: "none",
+          cursor: isLoading ? "wait" : "pointer",
+          transition: "filter 0.3s ease",
+        }}
+        onMouseEnter={(e) => {
+          if (!isLoading) {
+            e.currentTarget.style.filter = "brightness(1.2) drop-shadow(0 0 20px rgba(64, 224, 208, 0.8))";
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.filter = "none";
         }}
       >
         <img
           src={whirlpoolUrl}
-          alt="Whirlpool"
+          alt="Whirlpool - Click to visit a random personal ocean"
           style={{
             width: "100%",
             height: "100%",
             objectFit: "contain",
             objectPosition: "bottom center",
+            pointerEvents: "none",
           }}
         />
+        {/* Loading spinner overlay */}
+        {isLoading && (
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: "white",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "12px",
+              textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
+              animation: "pulse 1s ease-in-out infinite",
+            }}
+          >
+            Loading...
+          </div>
+        )}
       </div>
 
       {/* Back to Ocean Button */}
@@ -241,165 +528,14 @@ const Explore = () => {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
       `}</style>
     </div>
   );
 };
 
 export default Explore;
-
-
-
-
-
-
-// // Alternative 1: Flowing diagonal divisions
-// const sectionsV1 = [
-//   {
-//     id: "northwest",
-//     polygon: [[0, 0], [35, 0], [32, 15], [28, 25], [15, 30], [0, 28]],
-//     waypoints: [[16, 15]]
-//   },
-//   {
-//     id: "north",
-//     polygon: [[35, 0], [70, 0], [68, 12], [65, 28], [50, 35], [32, 32], [28, 25], [32, 15]],
-//     waypoints: [[50, 18]]
-//   },
-//   {
-//     id: "northeast",
-//     polygon: [[70, 0], [100, 0], [100, 35], [85, 38], [72, 42], [65, 28], [68, 12]],
-//     waypoints: [[82, 20]]
-//   },
-//   {
-//     id: "westcentral",
-//     polygon: [[0, 28], [15, 30], [18, 45], [12, 60], [0, 65]],
-//     waypoints: [[8, 45]]
-//   },
-//   {
-//     id: "central",
-//     polygon: [[15, 30], [28, 25], [32, 32], [50, 35], [55, 50], [48, 65], [30, 68], [18, 62], [12, 60], [18, 45]],
-//     waypoints: [[35, 48]]
-//   },
-//   {
-//     id: "eastcentral",
-//     polygon: [[50, 35], [65, 28], [72, 42], [85, 38], [88, 55], [80, 70], [65, 75], [48, 65], [55, 50]],
-//     waypoints: [[68, 52]]
-//   },
-//   {
-//     id: "southwest",
-//     polygon: [[0, 65], [12, 60], [18, 62], [20, 80], [10, 100], [0, 100]],
-//     waypoints: [[10, 82]]
-//   },
-//   {
-//     id: "south",
-//     polygon: [[18, 62], [30, 68], [48, 65], [65, 75], [60, 85], [45, 100], [10, 100], [20, 80]],
-//     waypoints: [[38, 85]]
-//   },
-//   {
-//     id: "southeast",
-//     polygon: [[65, 75], [80, 70], [88, 55], [85, 38], [100, 35], [100, 100], [45, 100], [60, 85]],
-//     waypoints: [[78, 85]]
-//   }
-// ];
-
-// // Alternative 2: Wave-like organic divisions
-// const sectionsV2 = [
-//   {
-//     id: "northwest",
-//     polygon: [[0, 0], [30, 0], [35, 20], [25, 35], [10, 40], [0, 30]],
-//     waypoints: [[15, 20]]
-//   },
-//   {
-//     id: "north",
-//     polygon: [[30, 0], [65, 0], [60, 15], [55, 30], [40, 40], [25, 35], [35, 20]],
-//     waypoints: [[45, 20]]
-//   },
-//   {
-//     id: "northeast",
-//     polygon: [[65, 0], [100, 0], [100, 40], [90, 45], [75, 38], [55, 30], [60, 15]],
-//     waypoints: [[80, 22]]
-//   },
-//   {
-//     id: "westcentral",
-//     polygon: [[0, 30], [10, 40], [15, 55], [8, 70], [0, 72]],
-//     waypoints: [[7, 50]]
-//   },
-//   {
-//     id: "central",
-//     polygon: [[10, 40], [25, 35], [40, 40], [55, 30], [75, 38], [70, 55], [50, 65], [30, 60], [15, 55]],
-//     waypoints: [[42, 48]]
-//   },
-//   {
-//     id: "eastcentral",
-//     polygon: [[75, 38], [90, 45], [100, 40], [100, 72], [85, 68], [70, 55]],
-//     waypoints: [[85, 55]]
-//   },
-//   {
-//     id: "southwest",
-//     polygon: [[0, 72], [8, 70], [15, 55], [30, 60], [25, 85], [15, 100], [0, 100]],
-//     waypoints: [[12, 85]]
-//   },
-//   {
-//     id: "south",
-//     polygon: [[30, 60], [50, 65], [70, 55], [85, 68], [75, 90], [55, 100], [15, 100], [25, 85]],
-//     waypoints: [[50, 80]]
-//   },
-//   {
-//     id: "southeast",
-//     polygon: [[85, 68], [100, 72], [100, 100], [55, 100], [75, 90]],
-//     waypoints: [[85, 85]]
-//   }
-// ];
-
-// // Alternative 3: Radial/spiral-inspired divisions
-// const sectionsV3 = [
-//   {
-//     id: "northwest",
-//     polygon: [[0, 0], [40, 0], [38, 25], [20, 40], [0, 35]],
-//     waypoints: [[20, 18]]
-//   },
-//   {
-//     id: "north",
-//     polygon: [[40, 0], [75, 0], [70, 22], [50, 35], [38, 25]],
-//     waypoints: [[55, 15]]
-//   },
-//   {
-//     id: "northeast",
-//     polygon: [[75, 0], [100, 0], [100, 30], [85, 40], [70, 22]],
-//     waypoints: [[85, 15]]
-//   },
-//   {
-//     id: "westcentral",
-//     polygon: [[0, 35], [20, 40], [25, 60], [10, 75], [0, 70]],
-//     waypoints: [[12, 55]]
-//   },
-//   {
-//     id: "central",
-//     // Large central polygon
-//     polygon: [[20, 40], [38, 25], [50, 35], [70, 22], [85, 40], [80, 55], [55, 70], [35, 65], [25, 60]],
-//     waypoints: [[50, 50]]
-//   },
-//   {
-//     id: "eastcentral",
-//     polygon: [[85, 40], [100, 30], [100, 65], [88, 72], [80, 55]],
-//     waypoints: [[88, 50]]
-//   },
-//   {
-//     id: "southwest",
-//     polygon: [[0, 70], [10, 75], [25, 60], [35, 65], [30, 85], [20, 100], [0, 100]],
-//     waypoints: [[15, 85]]
-//   },
-//   {
-//     id: "south",
-//     polygon: [[35, 65], [55, 70], [80, 55], [88, 72], [80, 88], [65, 100], [20, 100], [30, 85]],
-//     waypoints: [[50, 82]]
-//   },
-//   {
-//     id: "southeast",
-//     polygon: [[88, 72], [100, 65], [100, 100], [65, 100], [80, 88]],
-//     waypoints: [[85, 85]]
-//   }
-// ];
-
-// // Choose which version to use - you can change this to sectionsV1, sectionsV2, or sectionsV3
-// const sections = sectionsV3;

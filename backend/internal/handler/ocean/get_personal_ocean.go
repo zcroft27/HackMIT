@@ -9,17 +9,15 @@ import (
 func (h *Handler) GetRandomPersonalOcean(c *fiber.Ctx) error {
 	// Get user ID from route parameter
 	userIDStr := c.Params("id") // Changed from "userId" to "id"
-	if userIDStr == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "User ID is required",
-		})
-	}
-
-	currentUserID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid user ID format",
-		})
+	var currentUserID *uuid.UUID
+	if userIDStr != "" {
+		parsedID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid user ID format",
+			})
+		}
+		currentUserID = &parsedID
 	}
 
 	ocean, err := h.oceanRepository.GetRandomPersonalOcean(c.Context(), currentUserID)

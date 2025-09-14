@@ -26,7 +26,7 @@ type BottleRepository interface {
 type OceanRepository interface {
 	GetOceans(ctx context.Context, filterParams models.GetOceansRequest) ([]models.Ocean, error)
 	GetDefaultOcean(ctx context.Context) (*models.Ocean, error)
-	GetRandomPersonalOcean(ctx context.Context, currentUserId uuid.UUID) (*models.Ocean, error)
+	GetRandomPersonalOcean(ctx context.Context, currentUserId *uuid.UUID) (*models.Ocean, error)
 	GetOceanByUser(ctx context.Context, userId uuid.UUID) (*models.Ocean, error)
 	CreateOcean(ctx context.Context, name *string, description *string, userId uuid.UUID) (*models.Ocean, error)
 	GetOceanById(ctx context.Context, oceanId int) (*models.Ocean, error)

@@ -157,14 +157,16 @@ func (r *BottleRepository) GetRandomBottle(ctx context.Context, filterParams mod
 
 	row, err := r.db.Query(ctx, query, queryArgs...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database query error: %w", err)
 	}
 	defer row.Close()
 
 	bottle, err := pgx.CollectOneRow(row, pgx.RowToStructByName[models.Bottle])
-
 	if err != nil {
-		return nil, errs.BadRequest(fmt.Sprintf("Error getting bottle %s", err))
+		if err == pgx.ErrNoRows {
+			return nil, errs.NotFound("No bottles found in this ocean")
+		}
+		return nil, fmt.Errorf("error collecting bottle: %w", err)
 	}
 
 	return &bottle, nil
