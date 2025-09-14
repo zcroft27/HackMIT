@@ -12,6 +12,7 @@ const bottleImageUrls = [
   "/bottle7.png",
   "/bottle8.png",
 ];
+const boatImageUrl = "/boat.png";
 const parchmentImageUrl = "/parchment.png";
 
 const NUM_BOTTLES = 30;
@@ -21,6 +22,9 @@ const BOTTLE_HEIGHT = 100;
 const BOB_AMPLITUDE = 5;
 const BOB_SPEED_MIN = 0.01;
 const BOB_SPEED_MAX = 0.03;
+
+const BOAT_AMPLITUDE = 15;
+const BOAT_SPEED = 0.5;
 
 type Bottle = {
   id: number;
@@ -282,6 +286,11 @@ const OceanApp = () => {
     }
   }, [setUser]);
 
+  // Boat state
+  const [boatY, setBoatY] = useState(window.innerHeight * 0.1); 
+  const boatBaseY = window.innerHeight * 0.1; // baseline position
+  const boatOffset = Math.random() * Math.PI * 2;
+
   // Initialize bottles
   useEffect(() => {
     const width = window.innerWidth;
@@ -313,14 +322,14 @@ const OceanApp = () => {
     setBottles(initialBottles);
   }, []);
 
-  // Animate bottles
   useEffect(() => {
     const animate = () => {
-      if (!popupBottle) {
-        timeRef.current += 1;
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+      timeRef.current += 1;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
+      // Bottles
+      if (!popupBottle) {
         setBottles((prev) =>
           prev.map((b) => {
             let newX = b.x - BOTTLE_SPEED;
@@ -328,12 +337,11 @@ const OceanApp = () => {
             let newImg = b.img;
             let newRotation = b.rotation;
 
-            // Respawn bottle if offscreen
             if (newX < -BOTTLE_WIDTH) {
               newX = width + Math.random() * width * 0.5;
               newBaseY = Math.random() * (height - BOTTLE_HEIGHT);
               newImg = getRandomBottleImage();
-              newRotation = Math.random() * 10 - 5; // reset tilt
+              newRotation = Math.random() * 10 - 5;
             }
 
             const newY =
@@ -352,6 +360,13 @@ const OceanApp = () => {
           })
         );
       }
+
+      // Boat bobbing
+      const elapsed = timeRef.current / 60; // convert to seconds-ish
+      const newBoatY =
+        boatBaseY +
+        Math.sin(elapsed * BOAT_SPEED + boatOffset) * BOAT_AMPLITUDE;
+      setBoatY(newBoatY);
 
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -439,6 +454,49 @@ const OceanApp = () => {
       >
         {user ? "Personal Ocean" : "Login"}
       </button>
+
+      <div
+        onClick={() => alert("Going to the explore page!")}
+        style={{
+          position: "fixed",
+          top: "20px",
+          left: "20px",
+          padding: "0.5rem 1rem",
+          background: "black",
+          border: "4px solid #fff",
+          boxShadow: "0 0 0 4px #000",
+          color: "white",
+          fontFamily: "'Press Start 2P', cursive",
+          fontSize: "12px",
+          textAlign: "center",
+          cursor: "pointer",
+          zIndex: 25,
+          display: "flex",
+          flexDirection: "column", // stack vertically
+          alignItems: "center",
+          gap: "0.25rem",
+          imageRendering: "pixelated",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "#333";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "black";
+        }}
+      >
+        <img
+          src={boatImageUrl}
+          alt="Boat"
+          style={{
+            width: "90px",
+            height: "auto",
+            imageRendering: "pixelated",
+            pointerEvents: "none",
+          }}
+          draggable={false}
+        />
+        <span>Go Explore</span>
+      </div>
 
       {/* Bottles */}
       {bottles.map((b) => (
