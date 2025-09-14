@@ -46,14 +46,24 @@ export async function getBottle(oceanId: string, seenByUserId?: string) {
   const params: any = {
     ocean_id: oceanId,
   };
+  
   if (seenByUserId) {
     params.seen_by_user_id = seenByUserId;
   }
+  
   return await axiosClient.get("/bottle/random", { params });
 }
 
-export async function createBottle() {
-  return await axiosClient.post("/bottle", {});
+// Updated createBottle function
+export async function createBottle(data: {
+  content: string;
+  author?: string | null;
+  tag_id?: number | null;
+  user_id?: string | null;
+  location_from?: string | null;
+  personal?: boolean;
+}) {
+  return await axiosClient.post("/bottle", data);
 }
 
 export async function deleteBottle(id: number) {

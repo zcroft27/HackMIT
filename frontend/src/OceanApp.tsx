@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "./UserContext";
 import { AuthModal } from "./AuthModal";
-import { getBottle, getDefaultOcean, getOceanByUserID } from "./services/api";
+import { getBottle, getDefaultOcean, getOceanByUserID, getTags, createBottle } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -40,10 +40,15 @@ type Bottle = {
 };
 
 type Ocean = {
-  id: string;
+  id: number;
   name?: string;
   description?: string;
   user_id?: string;
+};
+
+type Tag = {
+  id: number;
+  name: string;
 };
 
 const getRandomBottleImage = () =>
@@ -53,17 +58,29 @@ const OceanApp = () => {
   const [bottles, setBottles] = useState<Bottle[]>([]);
   const [popupBottle, setPopupBottle] = useState<Bottle | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showCreateBottleModal, setShowCreateBottleModal] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
+  const createBottleRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
   const animationRef = useRef<number | null>(null);
   const [currentOcean, setCurrentOcean] = useState<Ocean | null>(null);
   const [messageContent, setMessageContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
+  // Create bottle form states
+  const [bottleContent, setBottleContent] = useState<string>("");
+  const [bottleAuthor, setBottleAuthor] = useState<string>("");
+  const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
+  const [locationFrom, setLocationFrom] = useState<string>("");
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  
   const { user, logout } = useUser();
 
   // Check if we're on the personal ocean page
   const isPersonalOcean = currentOcean?.user_id === user?.id && user !== null;
+  // Check if we're on someone else's personal ocean
+  const isOthersPersonalOcean = currentOcean?.user_id && currentOcean?.user_id !== user?.id;
 
   // Fetch default ocean on mount
   useEffect(() => {
@@ -78,6 +95,26 @@ const OceanApp = () => {
 
     fetchDefaultOcean();
   }, []);
+
+  // Fetch tags when create bottle modal opens
+  useEffect(() => {
+    const fetchTags = async () => {
+      if (showCreateBottleModal && !isPersonalOcean) {
+        try {
+          const response = await getTags();
+          // Filter out the default tag
+          const filteredTags = response.data.filter((tag: Tag) => 
+            tag.name.toLowerCase() !== 'default' && tag.name.toLowerCase() !== 'personal'
+          );
+          setTags(filteredTags);
+        } catch (error) {
+          console.error("Failed to fetch tags:", error);
+        }
+      }
+    };
+
+    fetchTags();
+  }, [showCreateBottleModal, isPersonalOcean]);
 
   // Initialize bottles
   useEffect(() => {
@@ -112,7 +149,7 @@ const OceanApp = () => {
       const height = window.innerHeight;
 
       // Bottles
-      if (!popupBottle) {
+      if (!popupBottle && !showCreateBottleModal) {
         setBottles((prev) =>
           prev.map((b) => {
             let newX = b.x - BOTTLE_SPEED;
@@ -144,10 +181,6 @@ const OceanApp = () => {
         );
       }
 
-      // Boat bobbing
-      const elapsed = timeRef.current / 60; // convert to seconds-ish
-
-
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -155,7 +188,7 @@ const OceanApp = () => {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [popupBottle]);
+  }, [popupBottle, showCreateBottleModal]);
 
   // Close popup on outside click
   useEffect(() => {
@@ -163,6 +196,11 @@ const OceanApp = () => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
         setTimeout(() => {
           setPopupBottle(null);
+        }, 10);
+      }
+      if (createBottleRef.current && !createBottleRef.current.contains(e.target as Node)) {
+        setTimeout(() => {
+          setShowCreateBottleModal(false);
         }, 10);
       }
     };
@@ -182,6 +220,47 @@ const OceanApp = () => {
       } catch (error) {
         console.error("Failed to fetch personal ocean:", error);
       }
+    }
+  };
+
+  const handleCreateBottle = async () => {
+    if (!bottleContent.trim()) {
+      alert("Please write a message for your bottle!");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const bottleData: any = {
+        content: bottleContent,
+        author: bottleAuthor || null,
+        location_from: locationFrom || null,
+      };
+
+      // If in personal ocean, set personal flag
+      if (isPersonalOcean) {
+        bottleData.personal = true;
+        bottleData.user_id = user?.id;
+      } else if (selectedTagId) {
+        // Only add tag if not in personal ocean
+        bottleData.tag_id = selectedTagId;
+      }
+
+      await createBottle(bottleData);
+      
+      // Reset form
+      setBottleContent("");
+      setBottleAuthor("");
+      setSelectedTagId(null);
+      setLocationFrom("");
+      setShowCreateBottleModal(false);
+      
+      alert("Your bottle has been cast into the ocean!");
+    } catch (error) {
+      console.error("Failed to create bottle:", error);
+      alert("Failed to create bottle. Please try again.");
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -208,7 +287,7 @@ const OceanApp = () => {
             backgroundSize: "auto 100%",
             backgroundPosition: "0 0",
             animation: "scrollOcean 40s linear infinite",
-            animationPlayState: popupBottle || showAuthModal ? "paused" : "running",
+            animationPlayState: popupBottle || showAuthModal || showCreateBottleModal ? "paused" : "running",
         }}
       />
 
@@ -292,7 +371,7 @@ const OceanApp = () => {
           cursor: "pointer",
           zIndex: 25,
           display: "flex",
-          flexDirection: "column", // stack vertically
+          flexDirection: "column",
           alignItems: "center",
           gap: "0.25rem",
           imageRendering: "pixelated",
@@ -318,6 +397,46 @@ const OceanApp = () => {
         <span>Go Explore</span>
       </div>
 
+      {/* Create Bottle Button - Only show if logged in and not in someone else's personal ocean */}
+      {!isOthersPersonalOcean && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowCreateBottleModal(true);
+          }}
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "1rem 2rem",
+            zIndex: 15,
+            color: "white",
+            background: "#006400",
+            border: "4px solid #fff",
+            boxShadow: "0 0 0 4px #000",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "14px",
+            textShadow: "2px 2px #000",
+            imageRendering: "pixelated",
+            cursor: "pointer",
+            textTransform: "uppercase",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#228B22";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#006400";
+          }}
+        >
+          <span style={{ fontSize: "18px" }}>📝</span>
+          Cast a Bottle
+        </button>
+      )}
+
       {/* Bottles */}
       {bottles.map((b) => (
         <img
@@ -330,23 +449,19 @@ const OceanApp = () => {
                 setPopupBottle(b);
                 setIsLoading(true);
 
-                if (currentOcean?.id) {
                 try {
-
-                    // Start both the API call and the 0.5s delay at the same time
-                    const [response] = await Promise.all([
-                      getBottle(currentOcean.id, user?.id),
-                      new Promise(resolve => setTimeout(resolve, 750))
-                    ]);
-
+                  if (currentOcean) {
+                    const response = await getBottle(String(currentOcean.id), user?.id);
                     const data = response.data;
                     setMessageContent(data.content || "The ocean whispers secrets...");
-                  } catch (error) {
-                    console.error('Failed to fetch bottle message:', error);
-                    setMessageContent("The ocean's connection is turbulent...");
-                  } finally {
-                    setIsLoading(false);
+                  } else {
+                    setMessageContent("No ocean selected.");
                   }
+                } catch (error) {
+                  console.error('Failed to fetch bottle message:', error);
+                  setMessageContent("The ocean's connection is turbulent...");
+                } finally {
+                  setIsLoading(false);
                 }
               }
             }}
@@ -354,19 +469,18 @@ const OceanApp = () => {
                 position: "absolute",
                 left: b.x,
                 top: b.y,
-                maxWidth: BOTTLE_WIDTH,   // limit width
-                maxHeight: BOTTLE_HEIGHT, // limit height
-                width: "auto",            // keep ratio
-                height: "auto",           // keep ratio
+                maxWidth: BOTTLE_WIDTH,
+                maxHeight: BOTTLE_HEIGHT,
+                width: "auto",
+                height: "auto",
                 cursor: "pointer",
                 zIndex: 5,
                 userSelect: "none",
                 transform: `rotate(${b.rotation}deg)`,
-                objectFit: "contain",     // ensures no squishing
+                objectFit: "contain",
             }}
             draggable={false}
             />
-
       ))}
 
       {/* Personal Ocean Lighthouse - Only show when NOT on personal ocean */}
@@ -394,7 +508,6 @@ const OceanApp = () => {
             e.currentTarget.style.filter = "brightness(1)";
           }}
         >
-          {/* Lighthouse Image */}
           <img
             src="/lighthouse.png"
             alt="Lighthouse"
@@ -407,7 +520,6 @@ const OceanApp = () => {
             draggable={false}
           />
           
-          {/* Text */}
           <div
             style={{
               color: "white",
@@ -458,7 +570,7 @@ const OceanApp = () => {
       {/* Auth Modal */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-      {/* Popup */}
+      {/* Bottle Message Popup */}
       {popupBottle && (
         <div
           ref={popupRef}
@@ -481,7 +593,6 @@ const OceanApp = () => {
             imageRendering: "pixelated",
           }}
         >
-          {/* Close X button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -507,8 +618,207 @@ const OceanApp = () => {
           </button>
           
           <p style={{ margin: 0 }}>
-            {isLoading ? "Opening the bottle..." : messageContent}
+            {isLoading ? "Reading the message..." : messageContent}
           </p>
+        </div>
+      )}
+
+      {/* Create Bottle Modal */}
+      {showCreateBottleModal && (
+        <div
+          ref={createBottleRef}
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            padding: "2rem",
+            zIndex: 20,
+            color: "white",
+            background: "black",
+            border: "4px solid #fff",
+            boxShadow: "0 0 0 4px #000",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "12px",
+            textShadow: "2px 2px #000",
+            imageRendering: "pixelated",
+            minWidth: "400px",
+            maxWidth: "500px",
+          }}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCreateBottleModal(false);
+              // Reset form
+              setBottleContent("");
+              setBottleAuthor("");
+              setSelectedTagId(null);
+              setLocationFrom("");
+            }}
+            style={{
+              position: "absolute",
+              top: "8px",
+              right: "8px",
+              background: "transparent",
+              border: "none",
+              color: "white",
+              fontSize: "18px",
+              cursor: "pointer",
+              fontFamily: "'Press Start 2P', cursive",
+              textShadow: "2px 2px #000",
+              padding: "0",
+              lineHeight: "1",
+            }}
+          >
+            ✕
+          </button>
+          
+          <h2 style={{ margin: "0 0 1.5rem 0", fontSize: "16px", textAlign: "center" }}>
+            Cast Your Message
+          </h2>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {/* Message Content */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                Message *
+              </label>
+              <textarea
+                value={bottleContent}
+                onChange={(e) => setBottleContent(e.target.value)}
+                style={{
+                  width: "100%",
+                  minHeight: "80px",
+                  padding: "0.5rem",
+                  background: "#333",
+                  border: "2px solid #fff",
+                  color: "white",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "10px",
+                  resize: "vertical",
+                }}
+                placeholder="Write your message..."
+                maxLength={500}
+              />
+            </div>
+
+            {/* Author */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                Author (optional)
+              </label>
+              <input
+                type="text"
+                value={bottleAuthor}
+                onChange={(e) => setBottleAuthor(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.5rem",
+                  background: "#333",
+                  border: "2px solid #fff",
+                  color: "white",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "10px",
+                }}
+                placeholder="Anonymous"
+              />
+            </div>
+
+            {/* Location */}
+            <div>
+              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                Location (optional)
+              </label>
+              <input
+                type="text"
+                value={locationFrom}
+                onChange={(e) => setLocationFrom(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.5rem",
+                  background: "#333",
+                  border: "2px solid #fff",
+                  color: "white",
+                  fontFamily: "'Press Start 2P', cursive",
+                  fontSize: "10px",
+                }}
+                placeholder="Where are you casting from?"
+              />
+            </div>
+
+            {/* Tags - Only show if not in personal ocean */}
+            {!isPersonalOcean && tags.length > 0 && (
+              <div>
+                <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                  Tag (optional)
+                </label>
+                <select
+                  value={selectedTagId || ""}
+                  onChange={(e) => setSelectedTagId(e.target.value ? Number(e.target.value) : null)}
+                  style={{
+                    width: "100%",
+                    padding: "0.5rem",
+                    background: "#333",
+                    border: "2px solid #fff",
+                    color: "white",
+                    fontFamily: "'Press Start 2P', cursive",
+                    fontSize: "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="">No tag</option>
+                  {tags.map((tag) => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Personal Ocean Note */}
+            {isPersonalOcean && (
+              <p style={{ 
+                fontSize: "10px", 
+                textAlign: "center", 
+                margin: "0.5rem 0",
+                color: "#FFD700" 
+              }}>
+                This bottle will stay in your personal ocean
+              </p>
+            )}
+
+            {/* Submit Button */}
+            <button
+              onClick={handleCreateBottle}
+              disabled={isCreating || !bottleContent.trim()}
+              style={{
+                padding: "0.75rem 1.5rem",
+                marginTop: "0.5rem",
+                background: isCreating || !bottleContent.trim() ? "#555" : "#006400",
+                border: "2px solid #fff",
+                color: "white",
+                fontFamily: "'Press Start 2P', cursive",
+                fontSize: "12px",
+                cursor: isCreating || !bottleContent.trim() ? "not-allowed" : "pointer",
+                textAlign: "center",
+                width: "100%",
+              }}
+              onMouseEnter={(e) => {
+                if (!isCreating && bottleContent.trim()) {
+                  e.currentTarget.style.background = "#228B22";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isCreating && bottleContent.trim()) {
+                  e.currentTarget.style.background = "#006400";
+                }
+              }}
+            >
+              {isCreating ? "Casting..." : "Cast Bottle"}
+            </button>
+          </div>
         </div>
       )}
 

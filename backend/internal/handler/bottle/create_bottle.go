@@ -29,8 +29,6 @@ func (h *Handler) CreateBottle(c *fiber.Ctx) error {
 		}
 
 		filterParams.TagID = &defaultTag.ID
-	} else {
-		return errs.BadRequest("Missing tag_id")
 	}
 
 	bottle, err := h.bottleRepository.CreateBottle(c.Context(), filterParams)
