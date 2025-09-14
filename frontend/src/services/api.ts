@@ -2,7 +2,7 @@ import axios from "axios";
 import { Credentials } from "../../types/types";
 
 const axiosClient = axios.create({
-  baseURL: "http://localhost:8080/api/v1/",
+  baseURL: "http://castaway.zachlearns.com/backend/api/v1/",
   timeout: 10000,
   withCredentials: true, // Important for cookies
 });

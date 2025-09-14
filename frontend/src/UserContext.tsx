@@ -19,7 +19,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Create axios instance for auth endpoints
 const authAxios = axios.create({
-  baseURL: "http://localhost:8080/api/v1/",
+  baseURL: "http://castaway.zachlearns.com/backend/api/v1/",
   timeout: 10000,
   withCredentials: true,
 });
