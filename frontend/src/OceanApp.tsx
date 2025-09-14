@@ -536,11 +536,11 @@ useEffect(() => {
           }}
           style={{
             position: "fixed",
-            bottom: "130px",
+            bottom: "30px",
             left: "7%",
             transform: "translateX(-50%)",
             width: "80px",
-            height: "80px",
+            height: "auto",
             zIndex: 15,
             cursor: "pointer",
             display: "flex",
