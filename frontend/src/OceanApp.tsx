@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getBottle } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -201,19 +202,9 @@ useEffect(() => {
             params.append('seen_by_user_id', userID);
           }
           
-          const response = await fetch(`/bottle/random?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setMessageContent(data.message || "The ocean whispers secrets...");
-          } else {
-            setMessageContent("The bottle's message has been lost to the waves...");
-          }
+          const response = await getBottle(oceanID, userID);
+          const data = response.data;
+          setMessageContent(data.message || "The ocean whispers secrets...");
         } catch (error) {
           console.error('Failed to fetch bottle message:', error);
           setMessageContent("The ocean's connection is turbulent...");
