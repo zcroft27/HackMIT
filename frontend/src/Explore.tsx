@@ -205,9 +205,15 @@ const Explore = () => {
     
     setIsLoading(true);
     try {
+      let randomOcean = null;
+      if (!user?.id) {
+
       const response = await getRandomPersonalOcean();
-      const randomOcean = response.data;
-      
+      randomOcean = response.data;
+      } else {
+      const response = await getRandomPersonalOcean(user.id);
+      randomOcean = response.data;
+      }
       // Navigate to home with the ocean data
       navigate('/', { state: { ocean: randomOcean } });
     } catch (error) {
