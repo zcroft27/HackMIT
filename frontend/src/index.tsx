@@ -1,18 +1,26 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './index.css';
 import OceanApp from './OceanApp';
+import Explore from './Explore'; // Import your Explore component
 import reportWebVitals from './reportWebVitals';
 import { UserProvider } from './UserContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
 root.render(
   <React.StrictMode>
-    <UserProvider>
-    <OceanApp />
-    </UserProvider>
+    <BrowserRouter>
+      <UserProvider>
+        <Routes>
+          <Route path="/" element={<OceanApp />} />
+          <Route path="/explore" element={<Explore />} />
+        </Routes>
+      </UserProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
 

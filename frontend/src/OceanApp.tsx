@@ -27,10 +27,6 @@ const BOB_SPEED_MIN = 0.01;
 const BOB_SPEED_MAX = 0.03;
 const VERTICAL_ZONES = 6;
 
-const BOAT_AMPLITUDE = 15;
-const BOAT_SPEED = 0.5;
-const navigate = useNavigate();
-
 type Bottle = {
   id: number;
   x: number;
@@ -79,6 +75,8 @@ const OceanApp = () => {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   
   const { user, logout } = useUser();
+
+  const navigate = useNavigate();
 
   // Check if we're on the personal ocean page
   const isPersonalOcean = currentOcean?.user_id === user?.id && user !== null;
