@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useUser } from "./UserContext";
-import { getBottle } from "./services/api";
+import { AuthModal } from "./AuthModal";
+import { getBottle, getDefaultOcean, getOceanByUserID } from "./services/api";
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -35,220 +36,14 @@ type Bottle = {
   bobOffset: number;
   bobSpeed: number;
   img: string;
-  rotation: number; // NEW
+  rotation: number;
 };
 
-const AuthModal = ({ onClose }: { onClose: () => void }) => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    rememberMe: false,
-  });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { setUser } = useUser();
-
-  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
-    e.preventDefault();
-    setError("");
-
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      setError("Email and password are required");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const endpoint = isSignUp ? "signup" : "login";
-      const body = isSignUp
-        ? {
-            email: formData.email,
-            password: formData.password,
-            first_name: formData.firstName || null,
-            last_name: formData.lastName || null,
-          }
-        : {
-            email: formData.email,
-            password: formData.password,
-            rememberMe: formData.rememberMe,
-          };
-
-      const response = await fetch(`http://localhost:8080/api/v1/auth/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Authentication failed");
-      }
-
-      // Set user in context
-      setUser({
-        id: data.user.id,
-        email: data.user.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-      });
-
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "0.5rem",
-    marginBottom: "1rem",
-    background: "#333",
-    border: "2px solid #fff",
-    color: "white",
-    fontFamily: "'Press Start 2P', cursive",
-    fontSize: "10px",
-    outline: "none",
-  };
-
-  const labelStyle = {
-    display: "block",
-    marginBottom: "0.5rem",
-    fontSize: "10px",
-  };
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 30,
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          background: "black",
-          border: "4px solid #fff",
-          boxShadow: "0 0 0 4px #000",
-          padding: "2rem",
-          fontFamily: "'Press Start 2P', cursive",
-          color: "white",
-          textShadow: "2px 2px #000",
-          minWidth: "400px",
-          maxWidth: "90%",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2 style={{ fontSize: "16px", marginBottom: "1.5rem", textAlign: "center" }}>
-          {isSignUp ? "CREATE ACCOUNT" : "SIGN IN"}
-        </h2>
-
-        {error && (
-          <p style={{ color: "#ff6b6b", fontSize: "10px", marginBottom: "1rem" }}>
-            {error}
-          </p>
-        )}
-
-        <div>
-          {isSignUp && (
-            <>
-              <label style={labelStyle}>First Name</label>
-              <input
-                type="text"
-                style={inputStyle}
-                value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              />
-
-              <label style={labelStyle}>Last Name</label>
-              <input
-                type="text"
-                style={inputStyle}
-                value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              />
-            </>
-          )}
-
-          <label style={labelStyle}>Email</label>
-          <input
-            type="email"
-            style={inputStyle}
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            onKeyPress={(e) => e.key === "Enter" && handleSubmit(e as any)}
-          />
-
-          <label style={labelStyle}>Password</label>
-          <input
-            type="password"
-            style={inputStyle}
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            onKeyPress={(e) => e.key === "Enter" && handleSubmit(e as any)}
-          />
-
-          {!isSignUp && (
-            <label style={{ display: "flex", alignItems: "center", marginBottom: "1rem", fontSize: "10px" }}>
-              <input
-                type="checkbox"
-                checked={formData.rememberMe}
-                onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                style={{ marginRight: "0.5rem" }}
-              />
-              Remember Me
-            </label>
-          )}
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "0.75rem",
-              background: loading ? "#666" : "white",
-              color: "black",
-              border: "none",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "12px",
-              cursor: loading ? "not-allowed" : "pointer",
-              marginBottom: "1rem",
-            }}
-          >
-            {loading ? "LOADING..." : isSignUp ? "SIGN UP" : "SIGN IN"}
-          </button>
-        </div>
-
-        <p style={{ fontSize: "10px", textAlign: "center" }}>
-          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-          <span
-            style={{ color: "#4ECDC4", cursor: "pointer" }}
-            onClick={() => setIsSignUp(!isSignUp)}
-          >
-            {isSignUp ? "Sign In" : "Sign Up"}
-          </span>
-        </p>
-      </div>
-    </div>
-  );
+type Ocean = {
+  id: number;
+  name?: string;
+  description?: string;
+  user_id?: string;
 };
 
 const getRandomBottleImage = () =>
@@ -261,36 +56,28 @@ const OceanApp = () => {
   const popupRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
   const animationRef = useRef<number | null>(null);
-  const [userID, setUserID] = useState<string>("");
-  // setUserID("98c2f579-4769-4a1d-bffd-0eb47c158720");
-  const [oceanID, setOceanID] = useState<string>("");
-  // setOceanID("2");
+  const [currentOcean, setCurrentOcean] = useState<Ocean | null>(null);
   const [messageContent, setMessageContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  const { user, setUser, logout } = useUser();
+  const { user, logout } = useUser();
 
-  // Check cookies on mount
+  // Check if we're on the personal ocean page
+  const isPersonalOcean = currentOcean?.user_id === user?.id && user !== null;
+
+  // Fetch default ocean on mount
   useEffect(() => {
-    const getCookie = (name: string) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(";").shift();
+    const fetchDefaultOcean = async () => {
+      try {
+        const response = await getDefaultOcean();
+        setCurrentOcean(response.data);
+      } catch (error) {
+        console.error("Failed to fetch default ocean:", error);
+      }
     };
 
-    const userId = getCookie("user_id") || getCookie("userID");
-    const jwt = getCookie("jwt");
-
-    if (userId && jwt) {
-      // You might want to validate the JWT with the backend here
-      setUser({ id: userId });
-    }
-  }, [setUser]);
-
-  // Boat state
-  const [boatY, setBoatY] = useState(window.innerHeight * 0.1); 
-  const boatBaseY = window.innerHeight * 0.1; // baseline position
-  const boatOffset = Math.random() * Math.PI * 2;
+    fetchDefaultOcean();
+  }, []);
 
   // Initialize bottles
   useEffect(() => {
@@ -300,21 +87,16 @@ const OceanApp = () => {
 
     const initialBottles: Bottle[] = Array.from({ length: NUM_BOTTLES }).map(
       (_, i) => {
-      // Base x position evenly spaced
         const baseX = i * spacing + spacing / 2;
-
-      // Add only a *small* random offset, but not enough to overlap
-      const jitter = (spacing - BOTTLE_WIDTH) / 2; // max safe jitter
+        const jitter = (spacing - BOTTLE_WIDTH) / 2;
         const x = baseX + (Math.random() * 2 - 1) * jitter * 0.3;
-      // ^ 0.3 keeps them from drifting too far
-
         const baseY = Math.random() * (height - BOTTLE_HEIGHT);
         const bobOffset = Math.random() * Math.PI * 2;
         const bobSpeed =
           BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN);
         const img = getRandomBottleImage();
         const y = baseY;
-      const rotation = Math.random() * 10 - 5; // -5° to +5°
+        const rotation = Math.random() * 10 - 5;
 
         return { id: i, x, y, baseY, bobOffset, bobSpeed, img, rotation };
       }
@@ -364,10 +146,7 @@ const OceanApp = () => {
 
       // Boat bobbing
       const elapsed = timeRef.current / 60; // convert to seconds-ish
-      const newBoatY =
-        boatBaseY +
-        Math.sin(elapsed * BOAT_SPEED + boatOffset) * BOAT_AMPLITUDE;
-      setBoatY(newBoatY);
+
 
       animationRef.current = requestAnimationFrame(animate);
     };
@@ -394,9 +173,16 @@ const OceanApp = () => {
     };
   }, []);
 
-  const handlePersonalOcean = () => {
-    // Navigate to personal ocean or handle the action
-    console.log("Navigate to personal ocean for user:", user?.id);
+  const handlePersonalOcean = async () => {
+    if (user?.id) {
+      try {
+        const response = await getOceanByUserID(user.id);
+        setCurrentOcean(response.data);
+        console.log("Switched to personal ocean:", response.data);
+      } catch (error) {
+        console.error("Failed to fetch personal ocean:", error);
+      }
+    }
   };
 
   return (
@@ -426,35 +212,68 @@ const OceanApp = () => {
         }}
       />
 
-      {/* Login/Personal Ocean Button */}
-      <button
-        onClick={user ? handlePersonalOcean : () => setShowAuthModal(true)}
-        style={{
-          position: "fixed",
-          top: "20px",
-          right: "20px",
-          padding: "0.75rem 1.5rem",
-          zIndex: 15,
-          color: "white",
-          background: "black",
-          border: "4px solid #fff",
-          boxShadow: "0 0 0 4px #000",
-          fontFamily: "'Press Start 2P', cursive",
-          fontSize: "12px",
-          textShadow: "2px 2px #000",
-          imageRendering: "pixelated",
-          cursor: "pointer",
-          textTransform: "uppercase",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "#333";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "black";
-        }}
-      >
-        {user ? "Personal Ocean" : "Login"}
-      </button>
+      {/* Ocean Info Display - Centered */}
+      {currentOcean && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "1rem 1.5rem",
+            zIndex: 15,
+            color: "white",
+            background: "rgba(0, 0, 0, 0.8)",
+            border: "4px solid #fff",
+            boxShadow: "0 0 0 4px #000",
+            fontFamily: "'Press Start 2P', cursive",
+            textShadow: "2px 2px #000",
+            maxWidth: "400px",
+            textAlign: "center",
+          }}
+        >
+          <h2 style={{ fontSize: "14px", marginBottom: "0.5rem" }}>
+            {currentOcean.name || "Unnamed Ocean"}
+          </h2>
+          {currentOcean.description && (
+            <p style={{ fontSize: "10px", lineHeight: "1.4", margin: 0 }}>
+              {currentOcean.description}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Login Button */}
+      {!user && (
+        <button
+          onClick={() => setShowAuthModal(true)}
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            padding: "0.75rem 1.5rem",
+            zIndex: 15,
+            color: "white",
+            background: "black",
+            border: "4px solid #fff",
+            boxShadow: "0 0 0 4px #000",
+            fontFamily: "'Press Start 2P', cursive",
+            fontSize: "12px",
+            textShadow: "2px 2px #000",
+            imageRendering: "pixelated",
+            cursor: "pointer",
+            textTransform: "uppercase",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#333";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "black";
+          }}
+        >
+          Login
+        </button>
+      )}
 
       <div
         onClick={() => alert("Going to the explore page!")}
@@ -546,15 +365,132 @@ const OceanApp = () => {
             />
 
       ))}
-      {/* Logout button (only when logged in) */}
-      {user && (
+
+      {/* Personal Ocean Floating Island - Only show when NOT on personal ocean */}
+      {user && !isPersonalOcean && (
+        <div
+          onClick={handlePersonalOcean}
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            width: "120px",
+            height: "120px",
+            cursor: "pointer",
+            zIndex: 15,
+            animation: "floatIsland 3s ease-in-out infinite",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.filter = "brightness(1.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.filter = "brightness(1)";
+          }}
+        >
+          {/* Island Base */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "20px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "80px",
+              height: "40px",
+              background: "#D2691E",
+              borderRadius: "50%",
+              border: "3px solid #8B4513",
+              boxShadow: "0 4px 0 #654321",
+            }}
+          />
+          
+          {/* Sand */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "25px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "70px",
+              height: "30px",
+              background: "#F4A460",
+              borderRadius: "50%",
+            }}
+          />
+          
+          {/* Palm Tree Trunk */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "35px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "8px",
+              height: "40px",
+              background: "#8B4513",
+              borderLeft: "2px solid #654321",
+              borderRight: "2px solid #654321",
+            }}
+          />
+          
+          {/* Palm Leaves */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "70px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "60px",
+              height: "30px",
+              background: "#228B22",
+              clipPath: "polygon(50% 0%, 0% 100%, 20% 80%, 40% 90%, 50% 70%, 60% 90%, 80% 80%, 100% 100%)",
+              filter: "drop-shadow(2px 2px 0 #006400)",
+            }}
+          />
+          
+          {/* Glowing Star */}
+          <div
+            style={{
+              position: "absolute",
+              top: "0",
+              right: "10px",
+              width: "20px",
+              height: "20px",
+              background: "#FFD700",
+              clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+              animation: "pulse 2s ease-in-out infinite",
+              filter: "drop-shadow(0 0 10px #FFD700)",
+            }}
+          />
+          
+          {/* Text */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-5px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              color: "white",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "10px",
+              textShadow: "2px 2px #000",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+            }}
+          >
+            My Ocean
+          </div>
+        </div>
+      )}
+
+      {/* Logout button - Only show when on personal ocean */}
+      {user && isPersonalOcean && (
         <button
           onClick={logout}
           style={{
             position: "fixed",
             top: "20px",
-            right: "220px",
-            padding: "0.75rem 1rem",
+            right: "20px",
+            padding: "0.75rem 1.5rem",
             zIndex: 15,
             color: "white",
             background: "#8B0000",
@@ -578,10 +514,37 @@ const OceanApp = () => {
         </button>
       )}
 
+      {/* Bottles */}
+      {bottles.map((b) => (
+        <img
+          key={b.id}
+          src={b.img}
+          alt="Bottle"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!popupBottle) setPopupBottle(b);
+          }}
+          style={{
+            position: "absolute",
+            left: b.x,
+            top: b.y,
+            maxWidth: BOTTLE_WIDTH,
+            maxHeight: BOTTLE_HEIGHT,
+            width: "auto",
+            height: "auto",
+            cursor: "pointer",
+            zIndex: 5,
+            userSelect: "none",
+            transform: `rotate(${b.rotation}deg)`,
+            objectFit: "contain",
+          }}
+          draggable={false}
+        />
+      ))}
+
       {/* Auth Modal */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-      
       {/* Popup */}
       {popupBottle && (
         <div
@@ -636,12 +599,26 @@ const OceanApp = () => {
         </div>
       )}
 
-
-
       <style>{`
         @keyframes scrollOcean {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+        
+        @keyframes floatIsland {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { 
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          50% { 
+            transform: scale(1.2);
+            opacity: 1;
+          }
         }
       `}</style>
     </div>

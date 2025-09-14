@@ -1,10 +1,10 @@
 import axios from "axios";
-
 import { Credentials } from "../../types/types";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/api/v1/",
   timeout: 10000,
+  withCredentials: true, // Important for cookies
 });
 
 // AUTH ENDPOINTS
@@ -24,16 +24,31 @@ export async function login(email: string, password: string) {
   });
 }
 
+// OCEAN ENDPOINTS
+export async function getDefaultOcean() {
+  return await axiosClient.get("/oceans/default");
+}
+
+export async function getOceans() {
+  return await axiosClient.get("/oceans");
+}
+
+export async function getOceanByUserID(userId: string) {
+  return await axiosClient.get(`/oceans/${userId}`);
+}
+
+export async function getRandomPersonalOcean(id: string) {
+  return await axiosClient.get(`/oceans/personal/${id}`);
+}
+
 // BOTTLE ENDPOINTS
 export async function getBottle(oceanId: string, seenByUserId?: string) {
   const params: any = {
     ocean_id: oceanId,
   };
-  
   if (seenByUserId) {
     params.seen_by_user_id = seenByUserId;
   }
-  
   return await axiosClient.get("/bottle/random", { params });
 }
 
