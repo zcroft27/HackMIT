@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useUser } from "./UserContext";
 import { AuthModal } from "./AuthModal";
 import { getBottle, getDefaultOcean, getOceanByUserID, getTags, createBottle } from "./services/api";
+import { useNavigate } from 'react-router-dom';
 
 const oceanImageUrl = "/background.png";
 const bottleImageUrls = [
@@ -28,6 +29,7 @@ const VERTICAL_ZONES = 6;
 
 const BOAT_AMPLITUDE = 15;
 const BOAT_SPEED = 0.5;
+const navigate = useNavigate();
 
 type Bottle = {
   id: number;
@@ -368,7 +370,7 @@ useEffect(() => {
       )}
 
       <div
-        onClick={() => alert("Going to the explore page!")}
+        onClick={() => navigate('/explore')}
         style={{
           position: "fixed",
           top: "20px",
