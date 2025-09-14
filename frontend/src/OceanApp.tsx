@@ -512,7 +512,12 @@ const OceanApp = () => {
                 setIsLoading(true);
 
                 try {
-                  const response = await getBottle(oceanID, userID);
+                  // Start both the API call and the 0.5s delay at the same time
+                  const [response] = await Promise.all([
+                    getBottle(oceanID, userID),
+                    new Promise(resolve => setTimeout(resolve, 750))
+                  ]);
+
                   const data = response.data;
                   setMessageContent(data.content || "The ocean whispers secrets...");
                 } catch (error) {
@@ -626,7 +631,7 @@ const OceanApp = () => {
           </button>
           
           <p style={{ margin: 0 }}>
-            {isLoading ? "Reading the message..." : messageContent}
+            {isLoading ? "Opening the bottle..." : messageContent}
           </p>
         </div>
       )}
