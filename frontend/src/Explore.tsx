@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getRandomPersonalOcean, getOceans, getOceanByUserID } from './services/api';
 import { useUser } from './UserContext';
 
-const exploreBackgroundUrl = "/newExploreBackground.png";
+const exploreBackgroundUrl = "/bigBackground.png";
 
 const redWaypointUrl = "/redWaypoint.png";
 
