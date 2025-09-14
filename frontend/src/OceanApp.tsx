@@ -146,10 +146,7 @@ const OceanApp = () => {
 
       // Boat bobbing
       const elapsed = timeRef.current / 60; // convert to seconds-ish
-      const newBoatY =
-        boatBaseY +
-        Math.sin(elapsed * BOAT_SPEED + boatOffset) * BOAT_AMPLITUDE;
-      setBoatY(newBoatY);
+
 
       animationRef.current = requestAnimationFrame(animate);
     };
