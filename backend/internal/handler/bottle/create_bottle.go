@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"hackmit/internal/errs"
 	"hackmit/internal/models"
+	"log"
 	"regexp"
 	"strings"
 
@@ -75,20 +76,39 @@ type Pattern struct {
 	Confidence  float64
 }
 
+// DetectionResult holds information about a single detection
+type DetectionResult struct {
+	Pattern     Pattern
+	MatchedText string
+	StartIndex  int
+	EndIndex    int
+}
+
+// AnalysisResult contains all detection results for a piece of text
+type AnalysisResult struct {
+	IsHateful       bool
+	OverallSeverity SeverityLevel
+	TotalScore      float64
+	Detections      []DetectionResult
+	DebugInfo       string
+}
+
 // HateSpeechChecker is the main checker struct
 type HateSpeechChecker struct {
 	patterns              []Pattern
 	threshold             float64
 	caseSensitive         bool
 	enableProfanityFilter bool
+	debugMode             bool
 }
 
 // NewHateSpeechChecker creates a new checker instance
 func NewHateSpeechChecker() *HateSpeechChecker {
 	checker := &HateSpeechChecker{
-		threshold:             0.3,
+		threshold:             0.7,
 		caseSensitive:         false,
 		enableProfanityFilter: true,
+		debugMode:             true, // Enable debug mode by default
 	}
 	checker.initializePatterns()
 	return checker
@@ -104,7 +124,7 @@ func (hsc *HateSpeechChecker) initializePatterns() {
 		confidence  float64
 	}{
 		// Direct hate speech and threats
-		{`\b(hate|despise|detest|loathe)\s+(all|those|these|every)\s+\w+`, CategoryHate, SeverityHigh, "General hate expression", 0.85},
+		{`\b(hate|despise|detest|loathe)\s+(all|those|these|every|you)\s+\w+`, CategoryHate, SeverityHigh, "General hate expression", 0.85},
 		{`\b(kill|murder|eliminate|execute|exterminate)\s+(all|those|these|every)\s+\w+`, CategoryThreat, SeverityCritical, "Violent threat against groups", 0.95},
 		{`\byou\s+(should|deserve to|need to|ought to)\s+(die|disappear|leave|burn|suffer)`, CategoryThreat, SeverityHigh, "Personal threat", 0.90},
 		{`\b(kill|hurt|harm|beat|attack)\s+(yourself|urself)`, CategoryThreat, SeverityCritical, "Self-harm encouragement", 0.95},
@@ -186,14 +206,12 @@ func (hsc *HateSpeechChecker) initializePatterns() {
 	hsc.patterns = make([]Pattern, 0, len(patterns))
 
 	for _, p := range patterns {
-		// flags := regexp.IgnoreCase
-		// if hsc.caseSensitive {
-		// 	flags = 0
-		// }
-
 		regex, err := regexp.Compile("(?i)" + p.pattern)
 		if err != nil {
-			continue // Skip invalid patterns
+			if hsc.debugMode {
+				log.Printf("[HATE_SPEECH_DEBUG] Failed to compile pattern: %s, error: %v", p.pattern, err)
+			}
+			continue
 		}
 
 		hsc.patterns = append(hsc.patterns, Pattern{
@@ -204,26 +222,96 @@ func (hsc *HateSpeechChecker) initializePatterns() {
 			Confidence:  p.confidence,
 		})
 	}
+
+	if hsc.debugMode {
+		log.Printf("[HATE_SPEECH_DEBUG] Initialized %d patterns", len(hsc.patterns))
+	}
 }
 
-// IsHateful returns a simple yes/no answer for hate speech detection
-func (hsc *HateSpeechChecker) IsHateful(text string) bool {
+// AnalyzeText performs detailed analysis of text content
+func (hsc *HateSpeechChecker) AnalyzeText(text string) AnalysisResult {
+	result := AnalysisResult{
+		IsHateful:       false,
+		OverallSeverity: SeverityLow,
+		TotalScore:      0.0,
+		Detections:      []DetectionResult{},
+		DebugInfo:       "",
+	}
+
 	// Preprocess text
 	processedText := text
 	if !hsc.caseSensitive {
 		processedText = strings.ToLower(text)
 	}
 
-	// Check patterns - return true immediately on first significant match
-	for _, pattern := range hsc.patterns {
-		if pattern.Confidence >= hsc.threshold {
-			if pattern.Regex.MatchString(processedText) {
-				return true
+	if hsc.debugMode {
+		result.DebugInfo += fmt.Sprintf("=== HATE SPEECH ANALYSIS ===\n")
+		result.DebugInfo += fmt.Sprintf("Original text: %s\n", text)
+		result.DebugInfo += fmt.Sprintf("Processed text: %s\n", processedText)
+		result.DebugInfo += fmt.Sprintf("Threshold: %.2f\n", hsc.threshold)
+		result.DebugInfo += fmt.Sprintf("Checking %d patterns...\n\n", len(hsc.patterns))
+	}
+
+	// Check each pattern
+	for i, pattern := range hsc.patterns {
+		matches := pattern.Regex.FindAllStringIndex(processedText, -1)
+
+		if len(matches) > 0 {
+			for _, match := range matches {
+				matchedText := text[match[0]:match[1]]
+
+				detection := DetectionResult{
+					Pattern:     pattern,
+					MatchedText: matchedText,
+					StartIndex:  match[0],
+					EndIndex:    match[1],
+				}
+				result.Detections = append(result.Detections, detection)
+
+				// Update overall severity
+				if pattern.Severity > result.OverallSeverity {
+					result.OverallSeverity = pattern.Severity
+				}
+
+				// Update total score
+				if pattern.Confidence > result.TotalScore {
+					result.TotalScore = pattern.Confidence
+				}
+
+				if hsc.debugMode {
+					result.DebugInfo += fmt.Sprintf("MATCH FOUND!\n")
+					result.DebugInfo += fmt.Sprintf("  Pattern #%d: %s\n", i+1, pattern.Description)
+					result.DebugInfo += fmt.Sprintf("  Category: %s\n", pattern.Category)
+					result.DebugInfo += fmt.Sprintf("  Severity: %s\n", pattern.Severity)
+					result.DebugInfo += fmt.Sprintf("  Confidence: %.2f\n", pattern.Confidence)
+					result.DebugInfo += fmt.Sprintf("  Matched text: \"%s\"\n", matchedText)
+					result.DebugInfo += fmt.Sprintf("  Position: %d-%d\n\n", match[0], match[1])
+				}
 			}
 		}
 	}
 
-	return false
+	// Determine if content is hateful based on threshold
+	result.IsHateful = result.TotalScore >= hsc.threshold
+
+	if hsc.debugMode {
+		result.DebugInfo += fmt.Sprintf("=== ANALYSIS SUMMARY ===\n")
+		result.DebugInfo += fmt.Sprintf("Total detections: %d\n", len(result.Detections))
+		result.DebugInfo += fmt.Sprintf("Overall severity: %s\n", result.OverallSeverity)
+		result.DebugInfo += fmt.Sprintf("Total score: %.2f\n", result.TotalScore)
+		result.DebugInfo += fmt.Sprintf("Threshold: %.2f\n", hsc.threshold)
+		result.DebugInfo += fmt.Sprintf("Is hateful: %v\n", result.IsHateful)
+
+		log.Print(result.DebugInfo)
+	}
+
+	return result
+}
+
+// IsHateful returns a simple yes/no answer for hate speech detection
+func (hsc *HateSpeechChecker) IsHateful(text string) bool {
+	result := hsc.AnalyzeText(text)
+	return result.IsHateful
 }
 
 // SetThreshold sets the detection threshold (0.0 to 1.0)
@@ -233,12 +321,18 @@ func (hsc *HateSpeechChecker) SetThreshold(threshold float64) {
 	}
 }
 
+// SetDebugMode enables or disables debug output
+func (hsc *HateSpeechChecker) SetDebugMode(enabled bool) {
+	hsc.debugMode = enabled
+}
+
 // Initialize hate speech checker as a package variable for reuse
 var hateSpeechChecker = NewHateSpeechChecker()
 
-// moderateContent checks if the content contains hate speech
-func moderateContent(content string) bool {
-	return hateSpeechChecker.IsHateful(content)
+// moderateContent checks if the content contains hate speech with detailed logging
+func moderateContent(content string) (bool, AnalysisResult) {
+	result := hateSpeechChecker.AnalyzeText(content)
+	return result.IsHateful, result
 }
 
 // extractTextContent extracts all text fields from the request for moderation
@@ -246,7 +340,6 @@ func extractTextContent(filterParams models.CreateBottleRequest) []string {
 	var textFields []string
 
 	// Add all text fields that should be moderated
-	// Adjust these based on your actual CreateBottleRequest struct fields
 	if filterParams.Content != "" {
 		textFields = append(textFields, filterParams.Content)
 	}
@@ -267,11 +360,41 @@ func (h *Handler) CreateBottle(c *fiber.Ctx) error {
 		return errs.BadRequest(fmt.Sprintf("error parsing request body: %v", err))
 	}
 
-	// Content moderation - check for hate speech
+	// Content moderation - check for hate speech with detailed logging
 	textFields := extractTextContent(filterParams)
 	for _, text := range textFields {
-		if text != "" && moderateContent(text) {
-			return errs.BadRequest("Content blocked: Message contains inappropriate content that violates our community guidelines")
+		if text != "" {
+			isHateful, analysisResult := moderateContent(text)
+
+			// Log the full analysis for debugging
+			if hateSpeechChecker.debugMode {
+				log.Printf("\n[MODERATION] Field content: %s", text)
+				log.Printf("[MODERATION] Is hateful: %v", isHateful)
+				log.Printf("[MODERATION] Score: %.2f (threshold: %.2f)", analysisResult.TotalScore, hateSpeechChecker.threshold)
+				log.Printf("[MODERATION] Severity: %s", analysisResult.OverallSeverity)
+				log.Printf("[MODERATION] Detections: %d", len(analysisResult.Detections))
+
+				for i, detection := range analysisResult.Detections {
+					log.Printf("[MODERATION] Detection %d: %s (%s, %s, confidence: %.2f)",
+						i+1,
+						detection.Pattern.Description,
+						detection.Pattern.Category,
+						detection.Pattern.Severity,
+						detection.Pattern.Confidence)
+				}
+			}
+
+			if isHateful {
+				// Build detailed error message for debugging
+				detailMsg := fmt.Sprintf("Content blocked: Message contains inappropriate content that violates our community guidelines. ")
+				if hateSpeechChecker.debugMode {
+					detailMsg += fmt.Sprintf("(Score: %.2f, Severity: %s, Detections: %d)",
+						analysisResult.TotalScore,
+						analysisResult.OverallSeverity,
+						len(analysisResult.Detections))
+				}
+				return c.Status(fiber.StatusOK).SendString(detailMsg)
+			}
 		}
 	}
 
