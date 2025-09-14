@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { Credentials } from "../types/types";
+import { Credentials } from "../../types/types";
 
 const axiosClient = axios.create({
   baseURL: "http://localhost:8080/api/v1/",
@@ -25,7 +25,7 @@ export async function login(email: string, password: string) {
 }
 
 // BOTTLE ENDPOINTS
-export async function getBottle(oceanId: number, seenByUserId?: string) {
+export async function getBottle(oceanId: string, seenByUserId?: string) {
   const params: any = {
     ocean_id: oceanId,
   };
