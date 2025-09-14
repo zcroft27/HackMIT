@@ -769,7 +769,6 @@ useEffect(() => {
               zIndex: 1,
             }}
           >
-            ✕
           </button>
           
           <div
@@ -795,7 +794,7 @@ useEffect(() => {
               overflowY: "auto",
               padding: "0 40px 30px",
             }}>
-              {isLoading ? "Unrolling the scroll..." : messageContent}
+              {isLoading ? "Unfurling the scroll..." : messageContent}
             </p>
           </div>
         </div>
