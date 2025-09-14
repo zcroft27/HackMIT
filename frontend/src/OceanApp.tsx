@@ -451,7 +451,10 @@ const OceanApp = () => {
 
                 try {
                   if (currentOcean) {
-                    const response = await getBottle(String(currentOcean.id), user?.id);
+                    const [response] = await Promise.all([
+                    await getBottle(String(currentOcean.id), user?.id),
+                    new Promise(resolve => setTimeout(resolve, 750))
+                    ]);
                     const data = response.data;
                     setMessageContent(data.content || "The ocean whispers secrets...");
                   } else {
@@ -618,7 +621,7 @@ const OceanApp = () => {
           </button>
           
           <p style={{ margin: 0 }}>
-            {isLoading ? "Reading the message..." : messageContent}
+            {isLoading ? "Unfurling the scroll..." : messageContent}
           </p>
         </div>
       )}
