@@ -15,7 +15,9 @@ const bottleImageUrls = [
   "/bottle8.png",
 ];
 const boatImageUrl = "/boat.png";
-const parchmentImageUrl = "/parchment.png";
+const parchmentImageUrl = "/scroll.png";
+const lighthouseUrl = "/lighthouse.png";
+const emptyBottleUrl = "/emptyBottle.png";
 
 const NUM_BOTTLES = 30;
 const BOTTLE_SPEED = 0.5;
@@ -312,7 +314,9 @@ const OceanApp = () => {
           }}
         >
           <h2 style={{ fontSize: "14px", marginBottom: "0.5rem" }}>
-            {currentOcean.name || "Unnamed Ocean"}
+            {currentOcean.name?.toLowerCase() === "default" 
+              ? "The Big Blue Ocean" 
+              : currentOcean.name || "Unnamed Ocean"}
           </h2>
           {currentOcean.description && (
             <p style={{ fontSize: "10px", lineHeight: "1.4", margin: 0 }}>
@@ -399,42 +403,58 @@ const OceanApp = () => {
 
       {/* Create Bottle Button - Only show if logged in and not in someone else's personal ocean */}
       {!isOthersPersonalOcean && (
-        <button
+        <div
           onClick={(e) => {
             e.stopPropagation();
             setShowCreateBottleModal(true);
           }}
           style={{
             position: "fixed",
-            bottom: "30px",
-            left: "50%",
+            bottom: "130px",
+            left: "7%",
             transform: "translateX(-50%)",
-            padding: "1rem 2rem",
+            width: "80px",
+            height: "80px",
             zIndex: 15,
-            color: "white",
-            background: "#006400",
-            border: "4px solid #fff",
-            boxShadow: "0 0 0 4px #000",
-            fontFamily: "'Press Start 2P', cursive",
-            fontSize: "14px",
-            textShadow: "2px 2px #000",
-            imageRendering: "pixelated",
             cursor: "pointer",
-            textTransform: "uppercase",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             gap: "0.5rem",
+            animation: "floatBottle 2s ease-in-out infinite",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#228B22";
+            e.currentTarget.style.filter = "brightness(1.2) drop-shadow(0 0 15px rgba(255, 215, 0, 0.7))";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#006400";
+            e.currentTarget.style.filter = "none";
           }}
         >
-          <span style={{ fontSize: "18px" }}>📝</span>
-          Cast a Bottle
-        </button>
+          <img
+            src={emptyBottleUrl}
+            alt="Cast a Bottle"
+            style={{
+              width: "100%",
+              height: "auto",
+              imageRendering: "pixelated",
+              pointerEvents: "none",
+              filter: "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3))",
+            }}
+            draggable={false}
+          />
+          <span
+            style={{
+              color: "white",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "10px",
+              textShadow: "2px 2px #000",
+              whiteSpace: "nowrap",
+              textAlign: "center",
+            }}
+          >
+            Cast Bottle
+          </span>
+        </div>
       )}
 
       {/* Bottles */}
@@ -509,7 +529,7 @@ const OceanApp = () => {
           }}
         >
           <img
-            src="/lighthouse.png"
+            src={lighthouseUrl}
             alt="Lighthouse"
             style={{
               width: "50px",
@@ -570,7 +590,7 @@ const OceanApp = () => {
       {/* Auth Modal */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
 
-      {/* Bottle Message Popup */}
+      {/* Bottle Message Popup - Parchment Style */}
       {popupBottle && (
         <div
           ref={popupRef}
@@ -579,18 +599,18 @@ const OceanApp = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            padding: "1.5rem 2rem",
+            width: "500px",
+            height: "auto",
             zIndex: 20,
-            color: "white",
-            textAlign: "center",
-            background: "black",
-            border: "4px solid #fff",
-            boxShadow: "0 0 0 4px #000",
-            fontFamily: "'Press Start 2P', cursive",
-            fontSize: "14px",
-            lineHeight: "1.5",
-            textShadow: "2px 2px #000",
+            backgroundImage: `url('${parchmentImageUrl}')`,
+            backgroundSize: "100% 100%",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
             imageRendering: "pixelated",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "drop-shadow(0 8px 32px rgba(0, 0, 0, 0.5))",
           }}
         >
           <button
@@ -601,29 +621,53 @@ const OceanApp = () => {
             }}
             style={{
               position: "absolute",
-              top: "8px",
-              right: "8px",
+              top: "20px",
+              right: "50px",
               background: "transparent",
               border: "none",
-              color: "white",
-              fontSize: "18px",
+              color: "#3a2a1a",
+              fontSize: "16px",
               cursor: "pointer",
               fontFamily: "'Press Start 2P', cursive",
-              textShadow: "2px 2px #000",
-              padding: "0",
+              padding: "5px",
               lineHeight: "1",
+              filter: "drop-shadow(1px 1px rgba(255, 255, 255, 0.5))",
+              zIndex: 1,
             }}
           >
             ✕
           </button>
           
-          <p style={{ margin: 0 }}>
-            {isLoading ? "Reading the message..." : messageContent}
-          </p>
+          <div
+            style={{
+              padding: "60px 50px",
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              overflow: "hidden",
+            }}
+          >
+            <p style={{ 
+              margin: 0,
+              color: "#3a2a1a",
+              fontFamily: "'Press Start 2P', cursive",
+              fontSize: "12px",
+              lineHeight: "1.8",
+              fontStyle: "italic",
+              maxHeight: "100%",
+              overflowY: "auto",
+              padding: "0 40px 30px",
+            }}>
+              {isLoading ? "Unrolling the scroll..." : messageContent}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Create Bottle Modal */}
+      {/* Create Bottle Modal - Parchment Style */}
       {showCreateBottleModal && (
         <div
           ref={createBottleRef}
@@ -632,20 +676,69 @@ const OceanApp = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            padding: "2rem",
+            padding: "2.5rem",
             zIndex: 20,
-            color: "white",
-            background: "black",
-            border: "4px solid #fff",
-            boxShadow: "0 0 0 4px #000",
+            color: "#3a2a1a",
+            backgroundColor: "#f4e4c1",
+            backgroundImage: `
+              radial-gradient(ellipse at top left, rgba(139, 105, 20, 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse at bottom right, rgba(92, 51, 23, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(139, 105, 20, 0.08) 0%, transparent 30%),
+              radial-gradient(circle at 80% 20%, rgba(92, 51, 23, 0.08) 0%, transparent 30%),
+              radial-gradient(circle at 65% 65%, rgba(139, 105, 20, 0.05) 0%, transparent 40%)
+            `,
+            border: "3px solid #8b6914",
+            borderRadius: "8px",
+            boxShadow: `
+              0 8px 32px rgba(0, 0, 0, 0.5), 
+              inset 0 2px 4px rgba(255, 255, 255, 0.3),
+              inset 0 -2px 4px rgba(139, 105, 20, 0.2)
+            `,
             fontFamily: "'Press Start 2P', cursive",
             fontSize: "12px",
-            textShadow: "2px 2px #000",
             imageRendering: "pixelated",
-            minWidth: "400px",
-            maxWidth: "500px",
+            minWidth: "450px",
+            maxWidth: "550px",
           }}
         >
+          {/* Decorative corners */}
+          <div style={{
+            position: "absolute",
+            top: "-5px",
+            left: "-5px",
+            width: "20px",
+            height: "20px",
+            borderTop: "3px solid #8b6914",
+            borderLeft: "3px solid #8b6914",
+          }} />
+          <div style={{
+            position: "absolute",
+            top: "-5px",
+            right: "-5px",
+            width: "20px",
+            height: "20px",
+            borderTop: "3px solid #8b6914",
+            borderRight: "3px solid #8b6914",
+          }} />
+          <div style={{
+            position: "absolute",
+            bottom: "-5px",
+            left: "-5px",
+            width: "20px",
+            height: "20px",
+            borderBottom: "3px solid #8b6914",
+            borderLeft: "3px solid #8b6914",
+          }} />
+          <div style={{
+            position: "absolute",
+            bottom: "-5px",
+            right: "-5px",
+            width: "20px",
+            height: "20px",
+            borderBottom: "3px solid #8b6914",
+            borderRight: "3px solid #8b6914",
+          }} />
+          
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -658,30 +751,41 @@ const OceanApp = () => {
             }}
             style={{
               position: "absolute",
-              top: "8px",
-              right: "8px",
+              top: "12px",
+              right: "12px",
               background: "transparent",
               border: "none",
-              color: "white",
+              color: "#8b6914",
               fontSize: "18px",
               cursor: "pointer",
               fontFamily: "'Press Start 2P', cursive",
-              textShadow: "2px 2px #000",
               padding: "0",
               lineHeight: "1",
+              textShadow: "1px 1px rgba(255, 255, 255, 0.5)",
             }}
           >
             ✕
           </button>
           
-          <h2 style={{ margin: "0 0 1.5rem 0", fontSize: "16px", textAlign: "center" }}>
-            Cast Your Message
+          <h2 style={{ 
+            margin: "0 0 1.5rem 0", 
+            fontSize: "16px", 
+            textAlign: "center",
+            color: "#5a3a1a",
+            textShadow: "2px 2px rgba(255, 255, 255, 0.3)",
+          }}>
+            ～ Scribe Your Message ～
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {/* Message Content */}
             <div>
-              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+              <label style={{ 
+                display: "block", 
+                marginBottom: "0.5rem",
+                color: "#5a3a1a",
+                textShadow: "1px 1px rgba(255, 255, 255, 0.3)",
+              }}>
                 Message *
               </label>
               <textarea
@@ -691,21 +795,28 @@ const OceanApp = () => {
                   width: "100%",
                   minHeight: "80px",
                   padding: "0.5rem",
-                  background: "#333",
-                  border: "2px solid #fff",
-                  color: "white",
+                  background: "rgba(255, 248, 220, 0.8)",
+                  border: "2px solid #8b6914",
+                  borderRadius: "4px",
+                  color: "#3a2a1a",
                   fontFamily: "'Press Start 2P', cursive",
                   fontSize: "10px",
                   resize: "vertical",
+                  boxShadow: "inset 0 2px 4px rgba(139, 105, 20, 0.2)",
                 }}
                 placeholder="Write your message..."
-                maxLength={500}
+                maxLength={100}
               />
             </div>
 
             {/* Author */}
             <div>
-              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+              <label style={{ 
+                display: "block", 
+                marginBottom: "0.5rem",
+                color: "#5a3a1a",
+                textShadow: "1px 1px rgba(255, 255, 255, 0.3)",
+              }}>
                 Author (optional)
               </label>
               <input
@@ -715,11 +826,13 @@ const OceanApp = () => {
                 style={{
                   width: "100%",
                   padding: "0.5rem",
-                  background: "#333",
-                  border: "2px solid #fff",
-                  color: "white",
+                  background: "rgba(255, 248, 220, 0.8)",
+                  border: "2px solid #8b6914",
+                  borderRadius: "4px",
+                  color: "#3a2a1a",
                   fontFamily: "'Press Start 2P', cursive",
                   fontSize: "10px",
+                  boxShadow: "inset 0 2px 4px rgba(139, 105, 20, 0.2)",
                 }}
                 placeholder="Anonymous"
               />
@@ -727,7 +840,12 @@ const OceanApp = () => {
 
             {/* Location */}
             <div>
-              <label style={{ display: "block", marginBottom: "0.5rem" }}>
+              <label style={{ 
+                display: "block", 
+                marginBottom: "0.5rem",
+                color: "#5a3a1a",
+                textShadow: "1px 1px rgba(255, 255, 255, 0.3)",
+              }}>
                 Location (optional)
               </label>
               <input
@@ -737,11 +855,13 @@ const OceanApp = () => {
                 style={{
                   width: "100%",
                   padding: "0.5rem",
-                  background: "#333",
-                  border: "2px solid #fff",
-                  color: "white",
+                  background: "rgba(255, 248, 220, 0.8)",
+                  border: "2px solid #8b6914",
+                  borderRadius: "4px",
+                  color: "#3a2a1a",
                   fontFamily: "'Press Start 2P', cursive",
                   fontSize: "10px",
+                  boxShadow: "inset 0 2px 4px rgba(139, 105, 20, 0.2)",
                 }}
                 placeholder="Where are you casting from?"
               />
@@ -750,7 +870,12 @@ const OceanApp = () => {
             {/* Tags - Only show if not in personal ocean */}
             {!isPersonalOcean && tags.length > 0 && (
               <div>
-                <label style={{ display: "block", marginBottom: "0.5rem" }}>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: "0.5rem",
+                  color: "#5a3a1a",
+                  textShadow: "1px 1px rgba(255, 255, 255, 0.3)",
+                }}>
                   Tag (optional)
                 </label>
                 <select
@@ -759,12 +884,14 @@ const OceanApp = () => {
                   style={{
                     width: "100%",
                     padding: "0.5rem",
-                    background: "#333",
-                    border: "2px solid #fff",
-                    color: "white",
+                    background: "rgba(255, 248, 220, 0.8)",
+                    border: "2px solid #8b6914",
+                    borderRadius: "4px",
+                    color: "#3a2a1a",
                     fontFamily: "'Press Start 2P', cursive",
                     fontSize: "10px",
                     cursor: "pointer",
+                    boxShadow: "inset 0 2px 4px rgba(139, 105, 20, 0.2)",
                   }}
                 >
                   <option value="">No tag</option>
@@ -783,7 +910,9 @@ const OceanApp = () => {
                 fontSize: "10px", 
                 textAlign: "center", 
                 margin: "0.5rem 0",
-                color: "#FFD700" 
+                color: "#8b6914",
+                fontStyle: "italic",
+                textShadow: "1px 1px rgba(255, 255, 255, 0.3)",
               }}>
                 This bottle will stay in your personal ocean
               </p>
@@ -796,27 +925,30 @@ const OceanApp = () => {
               style={{
                 padding: "0.75rem 1.5rem",
                 marginTop: "0.5rem",
-                background: isCreating || !bottleContent.trim() ? "#555" : "#006400",
-                border: "2px solid #fff",
-                color: "white",
+                background: isCreating || !bottleContent.trim() ? "#a68a5a" : "#5a3a1a",
+                border: "2px solid #8b6914",
+                borderRadius: "4px",
+                color: "#f4e8d0",
                 fontFamily: "'Press Start 2P', cursive",
                 fontSize: "12px",
                 cursor: isCreating || !bottleContent.trim() ? "not-allowed" : "pointer",
                 textAlign: "center",
                 width: "100%",
+                boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)",
+                textShadow: "2px 2px #000",
               }}
               onMouseEnter={(e) => {
                 if (!isCreating && bottleContent.trim()) {
-                  e.currentTarget.style.background = "#228B22";
+                  e.currentTarget.style.background = "#3a2a1a";
                 }
               }}
               onMouseLeave={(e) => {
                 if (!isCreating && bottleContent.trim()) {
-                  e.currentTarget.style.background = "#006400";
+                  e.currentTarget.style.background = "#5a3a1a";
                 }
               }}
             >
-              {isCreating ? "Casting..." : "Cast Bottle"}
+              {isCreating ? "Sealing..." : "Seal & Cast"}
             </button>
           </div>
         </div>
@@ -831,6 +963,11 @@ const OceanApp = () => {
         @keyframes floatIsland {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes floatBottle {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50% { transform: translateX(-50%) translateY(-10px); }
         }
         
         @keyframes pulse {
