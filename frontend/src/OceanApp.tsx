@@ -71,6 +71,9 @@ const OceanApp = () => {
   const [currentOcean, setCurrentOcean] = useState<Ocean | null>(null);
   const [messageContent, setMessageContent] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const popupStateRef = useRef(false);
+  const createModalStateRef = useRef(false);
+  const authModalStateRef = useRef(false);
 
   // Duck state
   const [duck, setDuck] = useState<{ 
@@ -90,32 +93,47 @@ const OceanApp = () => {
   });
   const duckAnimationRef = useRef<number | null>(null);
 
-  // Duck animation effect
   useEffect(() => {
-    let duckDirection = Math.random() > 0.5 ? 1 : -1;
-    let duckBaseY = Math.random() * (window.innerHeight - 200) + 100;
-    let duckX = duckDirection === 1 ? -100 : window.innerWidth + 100;
+  popupStateRef.current = popupBottle !== null;
+}, [popupBottle]);
 
-    const spawnDuck = () => {
-      const bobOffset = Math.random() * Math.PI * 5;
-      const bobSpeed = BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN) * 5;
+useEffect(() => {
+  createModalStateRef.current = showCreateBottleModal;
+}, [showCreateBottleModal]);
+
+useEffect(() => {
+  authModalStateRef.current = showAuthModal;
+}, [showAuthModal]);
+
+useEffect(() => {
+  let duckDirection = Math.random() > 0.5 ? 1 : -1;
+  let duckBaseY = Math.random() * (window.innerHeight - 200) + 100;
+  let duckX = duckDirection === 1 ? -100 : window.innerWidth + 100;
+
+  const spawnDuck = () => {
+    const bobOffset = Math.random() * Math.PI * 5;
+    const bobSpeed = BOB_SPEED_MIN + Math.random() * (BOB_SPEED_MAX - BOB_SPEED_MIN) * 5;
+    
+    setDuck({ 
+      x: duckX, 
+      y: duckBaseY, 
+      baseY: duckBaseY,
+      bobOffset: bobOffset,
+      bobSpeed: bobSpeed,
+      active: true 
+    });
+    
+    duckTimeRef.current = 0;
+    
+    const animateDuck = () => {
+      // Use refs to check current popup states
+      const isPopupOpen = popupStateRef.current || createModalStateRef.current || authModalStateRef.current;
       
-      setDuck({ 
-        x: duckX, 
-        y: duckBaseY, 
-        baseY: duckBaseY,
-        bobOffset: bobOffset,
-        bobSpeed: bobSpeed,
-        active: true 
-      });
-      
-      duckTimeRef.current = 0;
-      
-      const animateDuck = () => {
+      // Only animate if no popups are open
+      if (!isPopupOpen) {
         duckTimeRef.current += 1;
         duckX += duckDirection * DUCK_SPEED;
         
-        // Calculate bobbing Y position
         const bobY = duckBaseY + Math.sin(duckTimeRef.current * bobSpeed + bobOffset) * BOB_AMPLITUDE;
         
         setDuck((prev) => ({
@@ -123,35 +141,34 @@ const OceanApp = () => {
           x: duckX,
           y: bobY,
         }));
-        
-        if (
-          (duckDirection === 1 && duckX < window.innerWidth + 100) ||
-          (duckDirection === -1 && duckX > -100)
-        ) {
-          duckAnimationRef.current = requestAnimationFrame(animateDuck);
-        } else {
-          setDuck((prev) => ({ ...prev, active: false }));
-        }
-      };
-      duckAnimationRef.current = requestAnimationFrame(animateDuck);
+      }
+      
+      if (
+        (duckDirection === 1 && duckX < window.innerWidth + 100) ||
+        (duckDirection === -1 && duckX > -100)
+      ) {
+        duckAnimationRef.current = requestAnimationFrame(animateDuck);
+      } else {
+        setDuck((prev) => ({ ...prev, active: false }));
+      }
     };
+    duckAnimationRef.current = requestAnimationFrame(animateDuck);
+  };
 
-    const interval = setInterval(() => {
-      duckDirection = Math.random() > 0.5 ? 1 : -1;
-      duckBaseY = Math.random() * (window.innerHeight - 200) + 100;
-      duckX = duckDirection === 1 ? -100 : window.innerWidth + 100;
-      spawnDuck();
-    }, DUCK_SPAWN_INTERVAL);
-
-    // Initial spawn
+  const interval = setInterval(() => {
+    duckDirection = Math.random() > 0.5 ? 1 : -1;
+    duckBaseY = Math.random() * (window.innerHeight - 200) + 100;
+    duckX = duckDirection === 1 ? -100 : window.innerWidth + 100;
     spawnDuck();
+  }, DUCK_SPAWN_INTERVAL);
 
-    return () => {
-      clearInterval(interval);
-      if (duckAnimationRef.current) cancelAnimationFrame(duckAnimationRef.current);
-    };
-  }, []);
+  spawnDuck();
 
+  return () => {
+    clearInterval(interval);
+    if (duckAnimationRef.current) cancelAnimationFrame(duckAnimationRef.current);
+  };
+}, []);
   // Create bottle form states
   const [bottleContent, setBottleContent] = useState<string>("");
   const [bottleAuthor, setBottleAuthor] = useState<string>("");
