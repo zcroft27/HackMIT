@@ -104,6 +104,8 @@ func (r *OceanRepository) GetRandomPersonalOcean(ctx context.Context, currentUse
 	var query string
 	var args []interface{}
 
+	fmt.Println("Current User ID:", currentUserId)
+
 	if currentUserId != nil {
 		// Exclude oceans from the specified user
 		query = `
