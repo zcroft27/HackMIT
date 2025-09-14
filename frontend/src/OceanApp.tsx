@@ -40,7 +40,7 @@ type Bottle = {
 };
 
 type Ocean = {
-  id: number;
+  id: string;
   name?: string;
   description?: string;
   user_id?: string;
@@ -330,20 +330,23 @@ const OceanApp = () => {
                 setPopupBottle(b);
                 setIsLoading(true);
 
+                if (currentOcean?.id) {
                 try {
-                  // Start both the API call and the 0.5s delay at the same time
-                  const [response] = await Promise.all([
-                    getBottle(oceanID, userID),
-                    new Promise(resolve => setTimeout(resolve, 750))
-                  ]);
 
-                  const data = response.data;
-                  setMessageContent(data.content || "The ocean whispers secrets...");
-                } catch (error) {
-                  console.error('Failed to fetch bottle message:', error);
-                  setMessageContent("The ocean's connection is turbulent...");
-                } finally {
-                  setIsLoading(false);
+                    // Start both the API call and the 0.5s delay at the same time
+                    const [response] = await Promise.all([
+                      getBottle(currentOcean.id, user?.id),
+                      new Promise(resolve => setTimeout(resolve, 750))
+                    ]);
+
+                    const data = response.data;
+                    setMessageContent(data.content || "The ocean whispers secrets...");
+                  } catch (error) {
+                    console.error('Failed to fetch bottle message:', error);
+                    setMessageContent("The ocean's connection is turbulent...");
+                  } finally {
+                    setIsLoading(false);
+                  }
                 }
               }
             }}
