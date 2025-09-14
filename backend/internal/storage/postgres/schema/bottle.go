@@ -169,14 +169,16 @@ func (r *BottleRepository) GetRandomBottle(ctx context.Context, filterParams mod
 		return nil, fmt.Errorf("error collecting bottle: %w", err)
 	}
 
-	query = `
-		INSERT INTO seen_bottles (user_id, bottle_id)
-		VALUES ($1, $2)
-		ON CONFLICT (user_id, bottle_id) DO NOTHING;
-	`
-	_, err = r.db.Exec(ctx, query, filterParams.SeenByUserId, bottle.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error querying database: %w", err)
+	if filterParams.SeenByUserId != nil {
+		query = `
+			INSERT INTO seen_bottles (user_id, bottle_id)
+			VALUES ($1, $2)
+			ON CONFLICT (user_id, bottle_id) DO NOTHING;
+		`
+		_, err = r.db.Exec(ctx, query, filterParams.SeenByUserId, bottle.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error querying database: %w", err)
+		}
 	}
 
 	return &bottle, nil
