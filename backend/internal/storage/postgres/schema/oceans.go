@@ -100,17 +100,34 @@ func (r *OceanRepository) GetDefaultOcean(ctx context.Context) (*models.Ocean, e
 	return &ocean, nil
 }
 
-func (r *OceanRepository) GetRandomPersonalOcean(ctx context.Context, currentUserId uuid.UUID) (*models.Ocean, error) {
-	const query = `
-        SELECT id, name, description, user_id
-        FROM ocean
-        WHERE user_id IS NOT NULL 
-        AND user_id != $1::uuid
-        ORDER BY RANDOM()
-        LIMIT 1
-    `
+func (r *OceanRepository) GetRandomPersonalOcean(ctx context.Context, currentUserId *uuid.UUID) (*models.Ocean, error) {
+	var query string
+	var args []interface{}
 
-	rows, err := r.db.Query(ctx, query, currentUserId)
+	if currentUserId != nil {
+		// Exclude oceans from the specified user
+		query = `
+			SELECT id, name, description, user_id
+			FROM ocean
+			WHERE user_id IS NOT NULL
+			  AND user_id != $1::uuid
+			ORDER BY RANDOM()
+			LIMIT 1
+		`
+		args = []interface{}{*currentUserId}
+	} else {
+		// Get any random personal ocean
+		query = `
+			SELECT id, name, description, user_id
+			FROM ocean
+			WHERE user_id IS NOT NULL
+			ORDER BY RANDOM()
+			LIMIT 1
+		`
+		args = []interface{}{}
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("error querying random personal ocean: %w", err)
 	}

@@ -102,6 +102,7 @@ func SetupApp(config config.Config, repo *storage.Repository) *fiber.App {
 	apiV1.Route("/oceans", func(router fiber.Router) {
 		router.Get("/", oceanHandler.GetOceans)
 		router.Get("/default", oceanHandler.GetDefaultOcean)
+		router.Get("/personal", oceanHandler.GetRandomPersonalOcean)
 		router.Get("/personal/:id", oceanHandler.GetRandomPersonalOcean)
 		router.Get("/:id", oceanHandler.GetOceanByUserID)
 

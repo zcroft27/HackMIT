@@ -37,12 +37,16 @@ export async function getOceanByUserID(userId: string) {
   return await axiosClient.get(`/oceans/${userId}`);
 }
 
-export async function getRandomPersonalOcean(id: string) {
-  return await axiosClient.get(`/oceans/personal/${id}`);
+export async function getRandomPersonalOcean(id?: string) {
+  if (id) {
+    return await axiosClient.get(`/oceans/personal/${id}`);
+  } else {
+    return await axiosClient.get(`/oceans/personal`);
+  }
 }
 
 // BOTTLE ENDPOINTS
-export async function getBottle(oceanId: string, seenByUserId?: string) {
+export async function getBottle(oceanId: number, seenByUserId?: string) {
   const params: any = {
     ocean_id: oceanId,
   };
