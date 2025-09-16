@@ -1,3 +1,5 @@
+Hackathon project for HackMIT 2025.
+
 # Running Locally
 Prerequisites:
 
