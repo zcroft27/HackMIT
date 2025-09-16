@@ -177,7 +177,7 @@ useEffect(() => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   
-  const { user, logout } = useUser();
+  const { user, logout, isAuthenticated } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
